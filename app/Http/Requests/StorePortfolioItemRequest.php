@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StorePortfolioItemRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()?->role === 'admin';
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title'         => ['required', 'string', 'max:255'],
+            'category'      => ['required', 'string', 'max:100'],
+            'summary'       => ['required', 'string', 'max:500'],
+            'description'   => ['nullable', 'string', 'max:100000'],
+            'project_url'   => ['nullable', 'url', 'max:2048'],
+            'image_url'     => ['nullable', 'url', 'max:2048'],
+            'display_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'is_active'     => ['nullable', 'boolean'],
+        ];
+    }
+}
