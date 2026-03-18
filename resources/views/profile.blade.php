@@ -7,10 +7,12 @@
 
 @section('content')
 <div class="row g-4 align-items-start">
-    <div class="col-lg-4 fade-in-up">
+    <div class="col-lg-4 fade-in-up" data-fade-in>
         <div class="clean-card p-4 text-center">
             @if(optional($profile)->avatar_url)
-                <img src="{{ $profile->avatar_url }}" alt="{{ $profile->full_name }}" class="img-fluid rounded-circle mb-3" style="width: 180px; height: 180px; object-fit: cover;">
+                <div class="image-skeleton rounded-circle mx-auto mb-3" style="width: 180px; height: 180px;">
+                    <img src="{{ $profile->avatar_url }}" alt="{{ $profile->full_name }}" class="img-fluid rounded-circle js-skeleton-image" style="width: 180px; height: 180px; object-fit: cover;">
+                </div>
             @endif
             <h3 class="section-title mb-1">{{ optional($profile)->full_name ?? __('Profile is not available yet') }}</h3>
             <p class="text-muted">{{ optional($profile)->title }}</p>
@@ -21,7 +23,7 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-8 fade-in-up fade-delay-1">
+    <div class="col-lg-8 fade-in-up fade-delay-1" data-fade-in>
         <div class="clean-card p-4">
             <h4 class="section-title">{{ __('About Me') }}</h4>
             <p class="mb-0">{{ optional($profile)->bio ?? __('Please complete profile data from the admin panel.') }}</p>

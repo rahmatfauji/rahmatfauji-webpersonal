@@ -51,9 +51,21 @@ class HomeController extends Controller
     {
         abort_unless($blogPost->is_published, 404);
 
+        $blogPost->increment('view_count');
+
         return view('blog.show', [
             'post' => $blogPost,
         ]);
+    }
+
+    public function portfolioVisit(PortfolioItem $portfolioItem)
+    {
+        abort_unless($portfolioItem->is_active, 404);
+        abort_if(empty($portfolioItem->project_url), 404);
+
+        $portfolioItem->increment('view_count');
+
+        return redirect()->away($portfolioItem->project_url);
     }
 
     public function portfolio()
@@ -73,6 +85,8 @@ class HomeController extends Controller
             'blogCount' => BlogPost::query()->count(),
             'portfolioCount' => PortfolioItem::query()->count(),
             'slideCount' => Slide::query()->count(),
+            'totalBlogViews' => (int) BlogPost::query()->sum('view_count'),
+            'totalPortfolioViews' => (int) PortfolioItem::query()->sum('view_count'),
             'latestPosts' => BlogPost::query()->latest()->take(5)->get(),
         ]);
     }

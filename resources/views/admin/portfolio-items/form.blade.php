@@ -35,9 +35,20 @@
     </div>
 
     <div class="col-md-6">
-        <label class="form-label">{{ __('Image URL') }}</label>
-        <input type="url" name="image_url" value="{{ old('image_url', optional($item)->image_url) }}" class="form-control @error('image_url') is-invalid @enderror">
-        @error('image_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        <label class="form-label">{{ __('Image') }}</label>
+        <div class="d-flex gap-2 align-items-start">
+            <div class="flex-grow-1">
+                <input type="file" id="portfolio-image-input" accept="image/*" class="form-control @error('image_url') is-invalid @enderror">
+                @error('image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <input type="hidden" id="portfolio-image-value" name="image_url" value="{{ old('image_url', optional($item)->image_url) }}">
+                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, WebP (max 5MB)') }}</div>
+            </div>
+            @if(optional($item)->image_url)
+            <img id="portfolio-image-preview" src="{{ optional($item)->image_url }}" alt="Portfolio" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
+            @else
+            <div id="portfolio-image-placeholder" style="width: 100px; height: 100px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;" class="text-muted small">{{ __('No image') }}</div>
+            @endif
+        </div>
     </div>
 
     <div class="col-md-3">
@@ -45,6 +56,66 @@
         <input type="number" min="0" name="display_order" value="{{ old('display_order', optional($item)->display_order ?? 0) }}" class="form-control @error('display_order') is-invalid @enderror">
         @error('display_order')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">{{ __('Save') }}</button>
+        <a href="{{ route('admin.portfolio-items.index') }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
+    </div>
+</form>
+
+<script>
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+    const portfolioImageInput = document.getElementById('portfolio-image-input');
+    const portfolioImageValue = document.getElementById('portfolio-image-value');
+    const portfolioImagePreview = document.getElementById('portfolio-image-preview');
+    const portfolioImagePlaceholder = document.getElementById('portfolio-image-placeholder');
+
+    // Handle portfolio image upload
+    portfolioImageInput.addEventListener('change', () => {
+        const file = portfolioImageInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('type', 'portfolio');
+
+        const loadingText = document.createElement('div');
+        loadingText.className = 'text-muted small';
+        loadingText.textContent = '{{ __('Uploading...') }}';
+        if (portfolioImagePlaceholder) portfolioImagePlaceholder.replaceWith(loadingText);
+        if (portfolioImagePreview) portfolioImagePreview.parentNode.removeChild(portfolioImagePreview);
+
+        fetch('{{ route('admin.upload-image') }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                portfolioImageValue.value = data.url;
+                const img = document.createElement('img');
+                img.id = 'portfolio-image-preview';
+                img.src = data.url;
+                img.alt = 'Portfolio';
+                img.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border-radius: 4px;';
+                loadingText.replaceWith(img);
+            } else {
+                alert('{{ __('Image upload failed.') }}');
+                loadingText.remove();
+                if (!portfolioImagePlaceholder) {
+                    const placeholder = document.createElement('div');
+                    placeholder.id = 'portfolio-image-placeholder';
+                    placeholder.style.cssText = 'width: 100px; height: 100px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
+                    placeholder.className = 'text-muted small';
+                    placeholder.textContent = '{{ __('No image') }}';
+                    loadingText.parentNode.appendChild(placeholder);
+                }
+            }
+        })
+        .catch(() => alert('{{ __('Image upload failed.') }}'));
+    });
+</script>
 
     <div class="col-md-3 d-flex align-items-end">
         <div class="form-check mb-2">

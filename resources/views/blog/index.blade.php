@@ -20,11 +20,11 @@
 
 <div class="row g-4">
     @forelse($posts as $post)
-        <div class="{{ $loop->first ? 'col-12' : 'col-md-6 col-lg-4' }} fade-in-up {{ $loop->first ? '' : 'fade-delay-1' }}">
+        <div class="{{ $loop->first ? 'col-12' : 'col-md-6 col-lg-4' }} fade-in-up {{ $loop->first ? '' : 'fade-delay-1' }}" data-fade-in>
             <article class="clean-card h-100 p-3 public-article-card {{ $loop->first ? 'featured-article-card p-lg-4' : '' }}">
                 @if($loop->first && $post->featured_image)
-                    <div class="featured-article-media mb-3 mb-lg-4">
-                        <img src="{{ $post->featured_image }}" alt="{{ $post->title }}" class="img-fluid">
+                    <div class="featured-article-media mb-3 mb-lg-4 image-skeleton">
+                        <img src="{{ $post->featured_image }}" alt="{{ $post->title }}" class="img-fluid js-skeleton-image">
                     </div>
                 @endif
                 <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>

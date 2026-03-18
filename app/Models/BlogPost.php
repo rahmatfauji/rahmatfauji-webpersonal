@@ -17,11 +17,13 @@ class BlogPost extends Model
         'featured_image',
         'published_at',
         'is_published',
+        'view_count',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'is_published' => 'boolean',
+        'view_count' => 'integer',
     ];
 
     public function getRouteKeyName(): string

@@ -133,7 +133,11 @@
                     </ul>
                 </li>
                 @auth
-                    <li class="nav-item"><span class="nav-link">{{ auth()->user()->name }}</span></li>
+                    @if(auth()->user()->role === 'admin')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.*') ? 'active fw-semibold text-primary' : '' }}" href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.*')) aria-current="page" @endif>{{ __('Administrator') }}</a>
+                        </li>
+                    @endif
                     <li class="nav-item">
                         <form method="POST" action="{{ route('logout') }}" class="ms-lg-2">
                             @csrf
@@ -158,7 +162,10 @@
     <div class="text-center footer-note">{{ __('Copyright') }} {{ date('Y') }} - Rahmat Fauji</div>
 </footer>
 
+<button id="scroll-to-top-btn" title="{{ __('Back to top') }}">↑</button>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const body = document.body;

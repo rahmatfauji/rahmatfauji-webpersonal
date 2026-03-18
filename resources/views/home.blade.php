@@ -45,7 +45,6 @@
 <section class="insight-ribbon clean-card p-3 p-lg-4 mb-4 fade-in-up fade-delay-1 section-decor">
     <span class="decor-orb decor-orb-b" data-parallax="0.03"></span>
     <div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3">
-        <span class="insight-label">{{ __('Data-Driven Personal Brand') }}</span>
         <a href="{{ route('blog.index') }}" class="insight-pill insight-link">{{ __('Featured Articles') }}: <strong>{{ $posts->count() }}</strong></a>
         <a href="{{ route('portfolio.index') }}" class="insight-pill insight-link">{{ __('Featured Projects') }}: <strong>{{ $portfolioItems->count() }}</strong></a>
         <a href="{{ $slides->isNotEmpty() ? '#heroCarousel' : route('home') }}" class="insight-pill insight-link">{{ __('Active Slides') }}: <strong>{{ $slides->count() }}</strong></a>
@@ -61,7 +60,7 @@
             <p class="mb-0">{{ optional($profile)->bio ?? __('Your bio will appear here once profile data is saved.') }}</p>
         </div>
     </div>
-    <div class="col-lg-5">
+    <div class="col-lg-5 d-none d-lg-block">
         <div class="soft-panel p-4 h-100 fade-in-up fade-delay-3">
             <h5 class="section-title">{{ __('Quick Menu') }}</h5>
             <div class="d-grid gap-2 mt-3">

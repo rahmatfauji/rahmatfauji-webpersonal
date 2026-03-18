@@ -8,13 +8,14 @@
     <a href="{{ route('admin.portfolio-items.create') }}" class="btn btn-primary">{{ __('Add Portfolio Item') }}</a>
 </div>
 
-<div class="clean-card p-3">
+<div class="clean-card p-3" data-fade-in>
     <div class="table-responsive">
         <table class="table table-striped align-middle mb-0">
             <thead>
                 <tr>
                     <th>{{ __('Title') }}</th>
                     <th>{{ __('Category') }}</th>
+                    <th>{{ __('Views') }}</th>
                     <th>{{ __('Order') }}</th>
                     <th>{{ __('Active') }}</th>
                     <th class="text-end">{{ __('Actions') }}</th>
@@ -25,6 +26,7 @@
                 <tr>
                     <td>{{ $item->title }}</td>
                     <td>{{ $item->category }}</td>
+                    <td>{{ number_format($item->view_count) }}</td>
                     <td>{{ $item->display_order }}</td>
                     <td>{{ $item->is_active ? __('Yes') : __('No') }}</td>
                     <td class="text-end">
@@ -37,7 +39,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5">{{ __('No portfolio items yet.') }}</td></tr>
+                <tr><td colspan="6">{{ __('No portfolio items yet.') }}</td></tr>
             @endforelse
             </tbody>
         </table>

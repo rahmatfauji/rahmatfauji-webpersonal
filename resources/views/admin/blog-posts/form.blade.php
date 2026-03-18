@@ -25,14 +25,27 @@
 
     <div class="col-12">
         <label class="form-label">{{ __('Content') }}</label>
-        <textarea id="content-editor" name="content" rows="6" class="form-control @error('content') is-invalid @enderror" required>{{ old('content', optional($post)->content) }}</textarea>
-        @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet">
+        <div id="content-editor" style="height: 400px;" class="@error('content') border-danger @enderror"></div>
+        <textarea id="content-value" name="content" style="display:none;">{{ old('content', optional($post)->content) }}</textarea>
+        @error('content')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
     </div>
 
     <div class="col-md-6">
-        <label class="form-label">{{ __('Featured Image URL') }}</label>
-        <input type="url" name="featured_image" value="{{ old('featured_image', optional($post)->featured_image) }}" class="form-control @error('featured_image') is-invalid @enderror">
-        @error('featured_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        <label class="form-label">{{ __('Featured Image') }}</label>
+        <div class="d-flex gap-2 align-items-start">
+            <div class="flex-grow-1">
+                <input type="file" id="featured-image-input" accept="image/*" class="form-control @error('featured_image') is-invalid @enderror">
+                @error('featured_image')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <input type="hidden" id="featured-image-value" name="featured_image" value="{{ old('featured_image', optional($post)->featured_image) }}">
+                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, WebP (max 5MB)') }}</div>
+            </div>
+            @if(optional($post)->featured_image)
+            <img id="featured-image-preview" src="{{ optional($post)->featured_image }}" alt="Featured" style="width: 100px; height: 80px; object-fit: cover; border-radius: 4px;">
+            @else
+            <div id="featured-image-placeholder" style="width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;" class="text-muted small">{{ __('No image') }}</div>
+            @endif
+        </div>
     </div>
 
     <div class="col-md-3">
@@ -54,11 +67,16 @@
     </div>
 </form>
 
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
 <script>
     const titleInput = document.getElementById('blog-title');
     const slugInput = document.getElementById('blog-slug');
     const csrfToken = document.querySelector('input[name="_token"]').value;
+    const contentValue = document.getElementById('content-value');
+    const featuredImageInput = document.getElementById('featured-image-input');
+    const featuredImageValue = document.getElementById('featured-image-value');
+    const featuredImagePreview = document.getElementById('featured-image-preview');
+    const featuredImagePlaceholder = document.getElementById('featured-image-placeholder');
 
     const sanitizeSlug = (value) => value
         .toLowerCase()
@@ -78,62 +96,112 @@
         slugInput.value = sanitizeSlug(slugInput.value);
     });
 
-    tinymce.init({
-        selector: '#content-editor',
-        menubar: 'file edit view insert format tools table help',
-        plugins: 'image media link lists table code codesample fullscreen preview autoresize',
-        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media codesample | code preview fullscreen',
-        height: 520,
-        object_resizing: true,
-        image_caption: true,
-        image_dimensions: true,
-        image_advtab: true,
-        automatic_uploads: true,
-        images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+    // Initialize Quill editor
+    const quill = new Quill('#content-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                ['blockquote', 'code-block'],
+                ['link', 'image'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                ['clean']
+            ]
+        }
+    });
+
+    // Set initial content
+    if (contentValue.value.trim()) {
+        quill.root.innerHTML = contentValue.value;
+    }
+
+    // Sync Quill content to textarea before submit
+    document.querySelector('form').addEventListener('submit', function() {
+        contentValue.value = quill.root.innerHTML;
+    });
+
+    // Handle image uploads in Quill
+    const imageHandler = () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = () => {
+            const file = input.files[0];
+            if (!file) return;
+
             const formData = new FormData();
-            formData.append('image', blobInfo.blob(), blobInfo.filename());
+            formData.append('image', file);
+            formData.append('type', 'blog');
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '{{ route('admin.blog-posts.upload-image') }}');
-            xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
-            xhr.setRequestHeader('Accept', 'application/json');
-
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    progress((event.loaded / event.total) * 100);
+            fetch('{{ route('admin.upload-image') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const range = quill.getSelection();
+                    quill.insertEmbed(range.index, 'image', data.url);
+                } else {
+                    alert('{{ __('Image upload failed.') }}');
                 }
-            };
+            })
+            .catch(() => alert('{{ __('Image upload failed.') }}'));
+        };
+    };
 
-            xhr.onload = () => {
-                if (xhr.status < 200 || xhr.status >= 300) {
-                    reject('HTTP Error: ' + xhr.status);
-                    return;
+    // Update toolbar image button handler
+    quill.getModule('toolbar').addHandler('image', imageHandler);
+
+    // Handle featured image upload
+    featuredImageInput.addEventListener('change', () => {
+        const file = featuredImageInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('type', 'blog');
+
+        const loadingText = document.createElement('div');
+        loadingText.className = 'text-muted small';
+        loadingText.textContent = '{{ __('Uploading...') }}';
+        if (featuredImagePlaceholder) featuredImagePlaceholder.replaceWith(loadingText);
+
+        fetch('{{ route('admin.upload-image') }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                featuredImageValue.value = data.url;
+                const img = document.createElement('img');
+                img.id = 'featured-image-preview';
+                img.src = data.url;
+                img.alt = 'Featured';
+                img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px;';
+                loadingText.replaceWith(img);
+            } else {
+                alert('{{ __('Image upload failed.') }}');
+                loadingText.remove();
+                if (!featuredImagePlaceholder) {
+                    const placeholder = document.createElement('div');
+                    placeholder.id = 'featured-image-placeholder';
+                    placeholder.style.cssText = 'width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
+                    placeholder.className = 'text-muted small';
+                    placeholder.textContent = '{{ __('No image') }}';
+                    loadingText.parentNode.appendChild(placeholder);
                 }
-
-                const json = JSON.parse(xhr.responseText);
-                if (!json.location) {
-                    reject('Invalid upload response');
-                    return;
-                }
-
-                resolve(json.location);
-            };
-
-            xhr.onerror = () => reject('{{ __('Image upload failed.') }}');
-            xhr.send(formData);
-        }),
-        media_live_embeds: true,
-        media_alt_source: false,
-        media_poster: false,
-        extended_valid_elements: 'iframe[src|frameborder|style|scrolling|class|width|height|name|align|allowfullscreen|allow|title]',
-        codesample_languages: [
-            { text: 'HTML/XML', value: 'markup' },
-            { text: 'CSS', value: 'css' },
-            { text: 'JavaScript', value: 'javascript' },
-            { text: 'PHP', value: 'php' },
-            { text: 'JSON', value: 'json' },
-            { text: 'SQL', value: 'sql' },
-            { text: 'Bash', value: 'bash' }
-        ]
+            }
+        })
+        .catch(() => alert('{{ __('Image upload failed.') }}'));
     });
 </script>

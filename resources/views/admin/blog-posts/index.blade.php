@@ -8,13 +8,14 @@
     <a href="{{ route('admin.blog-posts.create') }}" class="btn btn-primary">{{ __('Add Article') }}</a>
 </div>
 
-<div class="clean-card p-3">
+<div class="clean-card p-3" data-fade-in>
     <div class="table-responsive">
         <table class="table table-striped align-middle mb-0">
             <thead>
                 <tr>
                     <th>{{ __('Title') }}</th>
                     <th>{{ __('Slug') }}</th>
+                    <th>{{ __('Views') }}</th>
                     <th>{{ __('Published') }}</th>
                     <th class="text-end">{{ __('Actions') }}</th>
                 </tr>
@@ -24,6 +25,7 @@
                 <tr>
                     <td>{{ $post->title }}</td>
                     <td>{{ $post->slug }}</td>
+                    <td>{{ number_format($post->view_count) }}</td>
                     <td>{{ $post->is_published ? __('Yes') : __('No') }}</td>
                     <td class="text-end">
                         <a href="{{ route('admin.blog-posts.edit', $post) }}" class="btn btn-sm btn-outline-primary">{{ __('Edit') }}</a>
@@ -35,7 +37,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="4">{{ __('No articles yet.') }}</td></tr>
+                <tr><td colspan="5">{{ __('No articles yet.') }}</td></tr>
             @endforelse
             </tbody>
         </table>

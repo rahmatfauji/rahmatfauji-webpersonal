@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\FileUploadController;
 use App\Http\Controllers\Admin\PortfolioItemController as AdminPortfolioItemController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\SlideController as AdminSlideController;
@@ -21,8 +23,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/sitemap.xml', function () {
+Route::middleware('track.activity')->group(function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/sitemap.xml', function () {
     $staticPages = collect([
         ['loc' => route('home'), 'lastmod' => now()->toDateString()],
         ['loc' => route('profile'), 'lastmod' => now()->toDateString()],
@@ -68,11 +71,13 @@ Route::get('/sitemap.xml', function () {
         "</urlset>";
 
     return response($xml, 200)->header('Content-Type', 'application/xml');
-})->name('sitemap');
-Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
-Route::get('/blog', [HomeController::class, 'blog'])->name('blog.index');
-Route::get('/blog/{blogPost}', [HomeController::class, 'blogShow'])->name('blog.show');
-Route::get('/portfolio', [HomeController::class, 'portfolio'])->name('portfolio.index');
+    })->name('sitemap');
+    Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
+    Route::get('/blog', [HomeController::class, 'blog'])->name('blog.index');
+    Route::get('/blog/{blogPost}', [HomeController::class, 'blogShow'])->name('blog.show');
+    Route::get('/portfolio', [HomeController::class, 'portfolio'])->name('portfolio.index');
+    Route::get('/portfolio/{portfolioItem}/visit', [HomeController::class, 'portfolioVisit'])->name('portfolio.visit');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -85,11 +90,11 @@ Route::middleware('auth')->post('/logout', [AuthController::class, 'logout'])->n
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/', [HomeController::class, 'adminDashboard'])->name('dashboard');
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
+    Route::post('/upload-image', [FileUploadController::class, 'uploadImage'])->name('upload-image')->middleware('throttle:upload');
     Route::resource('profiles', AdminProfileController::class)->except(['show']);
     Route::resource('slides', AdminSlideController::class)->except(['show']);
-    Route::post('blog-posts/upload-image', [AdminBlogPostController::class, 'uploadImage'])
-        ->name('blog-posts.upload-image')
-        ->middleware('throttle:upload');
     Route::resource('blog-posts', AdminBlogPostController::class)->except(['show']);
     Route::resource('portfolio-items', AdminPortfolioItemController::class)->except(['show']);
 });

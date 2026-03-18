@@ -7,6 +7,107 @@
     --text-main: #1e293b;
 }
 
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.fade-in-active {
+    animation: fadeInUp 0.7s ease-out !important;
+}
+
+.slide-in-down {
+    animation: slideInDown 0.4s ease-out;
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.bounce {
+    animation: bounce 1s ease-in-out infinite;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
     color: var(--text-main);
@@ -567,8 +668,22 @@ body {
 }
 
 .fade-in-up {
+    animation: fadeInUp 0.7s ease forwards;
+}
+
+[data-fade-in] {
+    opacity: 1;
+    transform: none;
+}
+
+.js-fade [data-fade-in] {
     opacity: 0;
     transform: translateY(18px);
+}
+
+.js-fade [data-fade-in].fade-in-active {
+    opacity: 1;
+    transform: translateY(0);
     animation: fadeInUp 0.7s ease forwards;
 }
 
@@ -610,6 +725,36 @@ body {
     border: 0;
     border-radius: 0.75rem;
     margin: 0.75rem 0;
+}
+
+.image-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: #e6edf7;
+}
+
+.image-skeleton::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0) 100%);
+    animation: skeletonShimmer 1.2s infinite;
+    z-index: 1;
+}
+
+.image-skeleton > img.js-skeleton-image {
+    opacity: 0;
+    transition: opacity 0.28s ease;
+}
+
+.image-skeleton.is-loaded::before {
+    opacity: 0;
+    animation: none;
+}
+
+.image-skeleton.is-loaded > img.js-skeleton-image {
+    opacity: 1;
 }
 
 .rich-content pre {
@@ -1195,4 +1340,138 @@ body {
 
 [data-bs-theme="dark"] .admin-page .footer-note {
     color: #4b5563;
+}
+
+/* ============================================================
+   FORM VALIDATION & INTERACTIVE ELEMENTS
+   ============================================================ */
+
+.form-control.is-invalid,
+.form-control.is-invalid:focus,
+.form-select.is-invalid,
+.form-select.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid,
+.form-control.is-valid:focus,
+.form-select.is-valid,
+.form-select.is-valid:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+.invalid-feedback {
+    display: block;
+    font-size: 0.875rem;
+    color: #dc3545;
+    animation: slideInDown 0.3s ease-out;
+}
+
+/* Scroll to Top Button */
+#scroll-to-top-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(10, 78, 166, 0.3);
+    z-index: 999;
+}
+
+#scroll-to-top-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(10, 78, 166, 0.4);
+}
+
+#scroll-to-top-btn:active {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    #scroll-to-top-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Toast Styling Enhancement */
+#toast-container .toast {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+#toast-container .toast .btn-close {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+#toast-container .toast .btn-close:hover {
+    opacity: 1;
+}
+
+/* Loading Skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    transition: all 0.2s ease;
+}
+
+/* Enhanced Button Styles */
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before,
+.btn:focus::before {
+    width: 300px;
+    height: 300px;
 }

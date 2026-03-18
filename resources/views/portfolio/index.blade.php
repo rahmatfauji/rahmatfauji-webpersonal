@@ -20,11 +20,11 @@
 
 <div class="row g-4">
     @forelse($items as $item)
-        <div class="col-md-6 col-lg-4 fade-in-up fade-delay-1">
+        <div class="col-md-6 col-lg-4 fade-in-up fade-delay-1" data-fade-in>
             <article class="clean-card h-100 public-portfolio-card">
                 @if($item->image_url)
-                    <div class="portfolio-media-wrap">
-                        <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="img-fluid rounded-top" style="height: 180px; width: 100%; object-fit: cover;">
+                    <div class="portfolio-media-wrap image-skeleton" style="height: 180px;">
+                        <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="img-fluid rounded-top js-skeleton-image" style="height: 180px; width: 100%; object-fit: cover;">
                     </div>
                 @endif
                 <div class="p-3">
@@ -32,7 +32,7 @@
                     <h5>{{ $item->title }}</h5>
                     <p>{{ $item->summary }}</p>
                     @if($item->project_url)
-                        <a href="{{ $item->project_url }}" class="text-decoration-none" target="_blank" rel="noreferrer">{{ __('View project') }}</a>
+                        <a href="{{ route('portfolio.visit', $item) }}" class="text-decoration-none" target="_blank" rel="noreferrer">{{ __('View project') }}</a>
                     @endif
                     @include('partials.share-buttons', [
                         'url' => $item->project_url ?: route('portfolio.index'),

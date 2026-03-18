@@ -34,6 +34,21 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-6 fade-in-up fade-delay-1">
+        <div class="clean-card p-3 admin-stat">
+            <div class="text-muted">{{ __('Total Blog Views') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($totalBlogViews) }}</div>
+        </div>
+    </div>
+    <div class="col-md-6 fade-in-up fade-delay-2">
+        <div class="clean-card p-3 admin-stat">
+            <div class="text-muted">{{ __('Total Portfolio Views') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($totalPortfolioViews) }}</div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="clean-card p-4">
@@ -70,6 +85,7 @@
                 <a href="{{ route('admin.blog-posts.index') }}" class="btn btn-outline-primary">{{ __('Manage Blog') }}</a>
                 <a href="{{ route('admin.portfolio-items.index') }}" class="btn btn-outline-primary">{{ __('Manage Portfolio') }}</a>
                 <a href="{{ route('admin.slides.index') }}" class="btn btn-outline-primary">{{ __('Manage Slideshow') }}</a>
+                <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-outline-primary">{{ __('Visitor Activity Logs') }}</a>
             </div>
         </div>
     </div>

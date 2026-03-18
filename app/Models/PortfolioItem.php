@@ -18,9 +18,11 @@ class PortfolioItem extends Model
         'image_url',
         'display_order',
         'is_active',
+        'view_count',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'view_count' => 'integer',
     ];
 }
