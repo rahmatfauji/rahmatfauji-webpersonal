@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\RollsBackTempUploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSlideRequest extends FormRequest
 {
+    use RollsBackTempUploads;
+
     public function authorize(): bool
     {
         return $this->user()?->role === 'admin';
@@ -16,11 +19,12 @@ class UpdateSlideRequest extends FormRequest
         return [
             'title'         => ['required', 'string', 'max:255'],
             'subtitle'      => ['nullable', 'string', 'max:500'],
-            'image_url'     => ['required', 'url', 'max:2048'],
+            'image_url'     => ['nullable', 'string', 'max:2048'],
             'button_text'   => ['nullable', 'string', 'max:100'],
             'button_url'    => ['nullable', 'url', 'max:2048'],
             'display_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active'     => ['nullable', 'boolean'],
+            'upload_token'  => ['nullable', 'string'],
         ];
     }
 }

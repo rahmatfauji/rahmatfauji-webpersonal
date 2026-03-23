@@ -6,9 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePortfolioItemRequest;
 use App\Http\Requests\UpdatePortfolioItemRequest;
 use App\Models\PortfolioItem;
+use App\Services\TempUploadService;
+use Throwable;
 
 class PortfolioItemController extends Controller
 {
+    public function __construct(private TempUploadService $tempUploadService)
+    {
+    }
+
     public function index()
     {
         return view('admin.portfolio-items.index', [
@@ -24,8 +30,24 @@ class PortfolioItemController extends Controller
     public function store(StorePortfolioItemRequest $request)
     {
         $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['image_url'] = $this->tempUploadService->finalizeUrl(
+            $validated['image_url'] ?? null,
+            $uploadToken,
+            'portfolio'
+        );
         $validated['is_active'] = $request->boolean('is_active');
-        PortfolioItem::query()->create($validated);
+
+        try {
+            PortfolioItem::query()->create($validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.portfolio-items.index')->with('status', __('Portfolio item added successfully.'));
     }
@@ -40,8 +62,24 @@ class PortfolioItemController extends Controller
     public function update(UpdatePortfolioItemRequest $request, PortfolioItem $portfolioItem)
     {
         $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['image_url'] = $this->tempUploadService->finalizeUrl(
+            $validated['image_url'] ?? null,
+            $uploadToken,
+            'portfolio'
+        );
         $validated['is_active'] = $request->boolean('is_active');
-        $portfolioItem->update($validated);
+
+        try {
+            $portfolioItem->update($validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.portfolio-items.index')->with('status', __('Portfolio item updated successfully.'));
     }

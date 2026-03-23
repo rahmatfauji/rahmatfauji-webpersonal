@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\RollsBackTempUploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePortfolioItemRequest extends FormRequest
 {
+    use RollsBackTempUploads;
+
     public function authorize(): bool
     {
         return $this->user()?->role === 'admin';
@@ -22,6 +25,7 @@ class StorePortfolioItemRequest extends FormRequest
             'image_url'     => ['nullable', 'url', 'max:2048'],
             'display_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active'     => ['nullable', 'boolean'],
+            'upload_token'  => ['nullable', 'string'],
         ];
     }
 }

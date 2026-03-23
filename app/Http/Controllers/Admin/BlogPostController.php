@@ -8,14 +8,17 @@ use App\Http\Requests\StoreBlogPostRequest;
 use App\Http\Requests\UpdateBlogPostRequest;
 use App\Models\BlogPost;
 use App\Services\BlogPostService;
+use App\Services\TempUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 class BlogPostController extends Controller
 {
     public function __construct(
         private BlogPostRepositoryInterface $blogPostRepository,
-        private BlogPostService $blogPostService
+        private BlogPostService $blogPostService,
+        private TempUploadService $tempUploadService
     ) {
     }
 
@@ -33,7 +36,30 @@ class BlogPostController extends Controller
 
     public function store(StoreBlogPostRequest $request)
     {
-        $this->blogPostService->create($request->validated());
+        $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['content'] = $this->tempUploadService->finalizeContentUrls(
+            $validated['content'] ?? '',
+            $uploadToken,
+            'blog-inline'
+        );
+
+        $validated['featured_image'] = $this->tempUploadService->finalizeUrl(
+            $validated['featured_image'] ?? null,
+            $uploadToken,
+            'blog-featured'
+        );
+
+        try {
+            $this->blogPostService->create($validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.blog-posts.index')->with('status', __('Article added successfully.'));
     }
@@ -47,7 +73,30 @@ class BlogPostController extends Controller
 
     public function update(UpdateBlogPostRequest $request, BlogPost $blogPost)
     {
-        $this->blogPostService->update($blogPost, $request->validated());
+        $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['content'] = $this->tempUploadService->finalizeContentUrls(
+            $validated['content'] ?? '',
+            $uploadToken,
+            'blog-inline'
+        );
+
+        $validated['featured_image'] = $this->tempUploadService->finalizeUrl(
+            $validated['featured_image'] ?? null,
+            $uploadToken,
+            'blog-featured'
+        );
+
+        try {
+            $this->blogPostService->update($blogPost, $validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.blog-posts.index')->with('status', __('Article updated successfully.'));
     }

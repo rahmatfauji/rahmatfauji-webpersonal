@@ -14,12 +14,14 @@ class FileUploadController extends Controller
     {
         $validated = $request->validate([
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
-            'type' => ['nullable', 'in:blog,portfolio,profile'],
+            'type' => ['nullable', 'in:blog,portfolio,profile,slide'],
+            'temp_token' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'],
         ]);
 
         $file = $validated['image'];
         $type = $validated['type'] ?? 'general';
-        $directory = "uploads/{$type}";
+        $tempToken = $validated['temp_token'] ?? null;
+        $directory = $tempToken ? "uploads/tmp/{$tempToken}" : "uploads/{$type}";
 
         if (!Storage::disk('public')->exists($directory)) {
             Storage::disk('public')->makeDirectory($directory);
@@ -33,6 +35,7 @@ class FileUploadController extends Controller
             'success' => true,
             'url' => asset('storage/' . $path),
             'path' => $path,
+            'temporary' => (bool) $tempToken,
         ]);
     }
 }

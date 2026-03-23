@@ -6,9 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSlideRequest;
 use App\Http\Requests\UpdateSlideRequest;
 use App\Models\Slide;
+use App\Services\TempUploadService;
+use Throwable;
 
 class SlideController extends Controller
 {
+    public function __construct(private TempUploadService $tempUploadService)
+    {
+    }
+
     public function index()
     {
         return view('admin.slides.index', [
@@ -24,9 +30,24 @@ class SlideController extends Controller
     public function store(StoreSlideRequest $request)
     {
         $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['image_url'] = $this->tempUploadService->finalizeUrl(
+            $validated['image_url'] ?? null,
+            $uploadToken,
+            'slide'
+        );
         $validated['is_active'] = $request->boolean('is_active');
 
-        Slide::query()->create($validated);
+        try {
+            Slide::query()->create($validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.slides.index')->with('status', __('Slide added successfully.'));
     }
@@ -41,9 +62,24 @@ class SlideController extends Controller
     public function update(UpdateSlideRequest $request, Slide $slide)
     {
         $validated = $request->validated();
+        $uploadToken = $request->input('upload_token');
+        unset($validated['upload_token']);
+
+        $validated['image_url'] = $this->tempUploadService->finalizeUrl(
+            $validated['image_url'] ?? null,
+            $uploadToken,
+            'slide'
+        );
         $validated['is_active'] = $request->boolean('is_active');
 
-        $slide->update($validated);
+        try {
+            $slide->update($validated);
+        } catch (Throwable $e) {
+            $this->tempUploadService->cleanupToken($uploadToken);
+            throw $e;
+        }
+
+        $this->tempUploadService->cleanupToken($uploadToken);
 
         return redirect()->route('admin.slides.index')->with('status', __('Slide updated successfully.'));
     }

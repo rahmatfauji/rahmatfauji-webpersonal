@@ -21,6 +21,14 @@
                 <div>{{ optional($profile)->phone }}</div>
                 <div>{{ optional($profile)->location }}</div>
             </div>
+            <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                @if(optional($profile)->linkedin_url)
+                    <a href="{{ $profile->linkedin_url }}" target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-primary">{{ __('LinkedIn') }}</a>
+                @endif
+                @if(optional($profile)->github_url)
+                    <a href="{{ $profile->github_url }}" target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-primary">{{ __('GitHub') }}</a>
+                @endif
+            </div>
         </div>
     </div>
     <div class="col-lg-8 fade-in-up fade-delay-1" data-fade-in>

@@ -3,6 +3,8 @@
     @if($method !== 'POST')
         @method($method)
     @endif
+    @php($uploadToken = old('upload_token', (string) \Illuminate\Support\Str::uuid()))
+    <input type="hidden" id="upload-token" name="upload_token" value="{{ $uploadToken }}">
 
     <div class="col-md-8">
         <label class="form-label">{{ __('Title') }}</label>
@@ -69,75 +71,134 @@
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
 <script>
-    const titleInput = document.getElementById('blog-title');
-    const slugInput = document.getElementById('blog-slug');
-    const csrfToken = document.querySelector('input[name="_token"]').value;
-    const contentValue = document.getElementById('content-value');
-    const featuredImageInput = document.getElementById('featured-image-input');
-    const featuredImageValue = document.getElementById('featured-image-value');
-    const featuredImagePreview = document.getElementById('featured-image-preview');
-    const featuredImagePlaceholder = document.getElementById('featured-image-placeholder');
+    // Wait for DOM to be fully ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const titleInput = document.getElementById('blog-title');
+        const slugInput = document.getElementById('blog-slug');
+        const csrfToken = document.querySelector('input[name="_token"]').value;
+        const uploadToken = document.getElementById('upload-token').value;
+        const contentValue = document.getElementById('content-value');
+        const featuredImageInput = document.getElementById('featured-image-input');
+        const featuredImageValue = document.getElementById('featured-image-value');
+        const featuredImagePreview = document.getElementById('featured-image-preview');
+        const featuredImagePlaceholder = document.getElementById('featured-image-placeholder');
 
-    const sanitizeSlug = (value) => value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
+        const sanitizeSlug = (value) => value
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
 
-    titleInput.addEventListener('input', () => {
-        if (!slugInput.dataset.userEdited || slugInput.value.trim() === '') {
-            slugInput.value = sanitizeSlug(titleInput.value);
+        titleInput.addEventListener('input', () => {
+            if (!slugInput.dataset.userEdited || slugInput.value.trim() === '') {
+                slugInput.value = sanitizeSlug(titleInput.value);
+            }
+        });
+
+        slugInput.addEventListener('input', () => {
+            slugInput.dataset.userEdited = '1';
+            slugInput.value = sanitizeSlug(slugInput.value);
+        });
+
+        // Initialize Quill editor
+        const quill = new Quill('#content-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    ['blockquote', 'code-block'],
+                    ['link', 'image'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'align': [] }],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Set initial content
+        if (contentValue.value.trim()) {
+            quill.root.innerHTML = contentValue.value;
         }
-    });
 
-    slugInput.addEventListener('input', () => {
-        slugInput.dataset.userEdited = '1';
-        slugInput.value = sanitizeSlug(slugInput.value);
-    });
+        // Sync Quill content to textarea before submit
+        const forms = document.querySelectorAll('form');
+        const form = forms[forms.length - 1]; // Get the last form (our blog form)
+        
+        form.addEventListener('submit', function(e) {
+            // Get content from Quill editor
+            const content = quill.root.innerHTML.trim();
+            
+            // Check if content is empty (various empty HTML patterns)
+            if (!content || 
+                content === '<p><br></p>' || 
+                content === '<p></p>' ||
+                content === '<p>&nbsp;</p>' ||
+                content === '<br>' ||
+                content === '') {
+                e.preventDefault();
+                alert('{{ __('Content cannot be empty.') }}');
+                return false;
+            }
+            
+            // Sync content to hidden textarea BEFORE form submit
+            contentValue.value = content;
+        });
 
-    // Initialize Quill editor
-    const quill = new Quill('#content-editor', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'script': 'sub'}, { 'script': 'super' }],
-                ['blockquote', 'code-block'],
-                ['link', 'image'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'align': [] }],
-                ['clean']
-            ]
-        }
-    });
+        // Handle image uploads in Quill
+        const imageHandler = () => {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
 
-    // Set initial content
-    if (contentValue.value.trim()) {
-        quill.root.innerHTML = contentValue.value;
-    }
+            input.onchange = () => {
+                const file = input.files[0];
+                if (!file) return;
 
-    // Sync Quill content to textarea before submit
-    document.querySelector('form').addEventListener('submit', function() {
-        contentValue.value = quill.root.innerHTML;
-    });
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('type', 'blog');
+                formData.append('temp_token', uploadToken);
 
-    // Handle image uploads in Quill
-    const imageHandler = () => {
-        const input = document.createElement('input');
-        input.setAttribute('type', 'file');
-        input.setAttribute('accept', 'image/*');
-        input.click();
+                fetch('{{ route('admin.upload-image') }}', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', data.url);
+                    } else {
+                        alert('{{ __('Image upload failed.') }}');
+                    }
+                })
+                .catch(() => alert('{{ __('Image upload failed.') }}'));
+            };
+        };
 
-        input.onchange = () => {
-            const file = input.files[0];
+        // Update toolbar image button handler
+        quill.getModule('toolbar').addHandler('image', imageHandler);
+
+        // Handle featured image upload
+        featuredImageInput.addEventListener('change', () => {
+            const file = featuredImageInput.files[0];
             if (!file) return;
 
             const formData = new FormData();
             formData.append('image', file);
             formData.append('type', 'blog');
+            formData.append('temp_token', uploadToken);
+
+            const loadingText = document.createElement('div');
+            loadingText.className = 'text-muted small';
+            loadingText.textContent = '{{ __('Uploading...') }}';
+            if (featuredImagePlaceholder) featuredImagePlaceholder.replaceWith(loadingText);
 
             fetch('{{ route('admin.upload-image') }}', {
                 method: 'POST',
@@ -147,61 +208,27 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    const range = quill.getSelection();
-                    quill.insertEmbed(range.index, 'image', data.url);
+                    featuredImageValue.value = data.url;
+                    const img = document.createElement('img');
+                    img.id = 'featured-image-preview';
+                    img.src = data.url;
+                    img.alt = 'Featured';
+                    img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px;';
+                    loadingText.replaceWith(img);
                 } else {
                     alert('{{ __('Image upload failed.') }}');
+                    loadingText.remove();
+                    if (!featuredImagePlaceholder) {
+                        const placeholder = document.createElement('div');
+                        placeholder.id = 'featured-image-placeholder';
+                        placeholder.style.cssText = 'width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
+                        placeholder.className = 'text-muted small';
+                        placeholder.textContent = '{{ __('No image') }}';
+                        loadingText.parentNode.appendChild(placeholder);
+                    }
                 }
             })
             .catch(() => alert('{{ __('Image upload failed.') }}'));
-        };
-    };
-
-    // Update toolbar image button handler
-    quill.getModule('toolbar').addHandler('image', imageHandler);
-
-    // Handle featured image upload
-    featuredImageInput.addEventListener('change', () => {
-        const file = featuredImageInput.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('type', 'blog');
-
-        const loadingText = document.createElement('div');
-        loadingText.className = 'text-muted small';
-        loadingText.textContent = '{{ __('Uploading...') }}';
-        if (featuredImagePlaceholder) featuredImagePlaceholder.replaceWith(loadingText);
-
-        fetch('{{ route('admin.upload-image') }}', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                featuredImageValue.value = data.url;
-                const img = document.createElement('img');
-                img.id = 'featured-image-preview';
-                img.src = data.url;
-                img.alt = 'Featured';
-                img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px;';
-                loadingText.replaceWith(img);
-            } else {
-                alert('{{ __('Image upload failed.') }}');
-                loadingText.remove();
-                if (!featuredImagePlaceholder) {
-                    const placeholder = document.createElement('div');
-                    placeholder.id = 'featured-image-placeholder';
-                    placeholder.style.cssText = 'width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
-                    placeholder.className = 'text-muted small';
-                    placeholder.textContent = '{{ __('No image') }}';
-                    loadingText.parentNode.appendChild(placeholder);
-                }
-            }
-        })
-        .catch(() => alert('{{ __('Image upload failed.') }}'));
+        });
     });
 </script>

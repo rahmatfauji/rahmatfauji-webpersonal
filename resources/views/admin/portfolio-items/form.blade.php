@@ -3,6 +3,8 @@
     @if($method !== 'POST')
         @method($method)
     @endif
+    @php($uploadToken = old('upload_token', (string) \Illuminate\Support\Str::uuid()))
+    <input type="hidden" id="upload-token" name="upload_token" value="{{ $uploadToken }}">
 
     <div class="col-md-6">
         <label class="form-label">{{ __('Title') }}</label>
@@ -57,6 +59,13 @@
         @error('display_order')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
+    <div class="col-md-3 d-flex align-items-end">
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="is_active" value="1" {{ old('is_active', optional($item)->is_active ?? true) ? 'checked' : '' }}>
+            <label class="form-check-label">{{ __('Active') }}</label>
+        </div>
+    </div>
+
     <div class="col-12 d-flex gap-2">
         <button class="btn btn-primary">{{ __('Save') }}</button>
         <a href="{{ route('admin.portfolio-items.index') }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
@@ -65,6 +74,7 @@
 
 <script>
     const csrfToken = document.querySelector('input[name="_token"]').value;
+    const uploadToken = document.getElementById('upload-token').value;
     const portfolioImageInput = document.getElementById('portfolio-image-input');
     const portfolioImageValue = document.getElementById('portfolio-image-value');
     const portfolioImagePreview = document.getElementById('portfolio-image-preview');
@@ -78,6 +88,7 @@
         const formData = new FormData();
         formData.append('image', file);
         formData.append('type', 'portfolio');
+        formData.append('temp_token', uploadToken);
 
         const loadingText = document.createElement('div');
         loadingText.className = 'text-muted small';
@@ -116,16 +127,3 @@
         .catch(() => alert('{{ __('Image upload failed.') }}'));
     });
 </script>
-
-    <div class="col-md-3 d-flex align-items-end">
-        <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" name="is_active" value="1" {{ old('is_active', optional($item)->is_active ?? true) ? 'checked' : '' }}>
-            <label class="form-check-label">{{ __('Active') }}</label>
-        </div>
-    </div>
-
-    <div class="col-12 d-flex gap-2">
-        <button class="btn btn-primary">{{ __('Save') }}</button>
-        <a href="{{ route('admin.portfolio-items.index') }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
-    </div>
-</form>

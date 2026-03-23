@@ -5,6 +5,82 @@
 @section('meta_type', 'website')
 @section('meta_canonical', route('home'))
 
+@php
+    $chartItems = collect(optional($profile)->expertise_chart ?: [
+        ['label' => 'Data Modeling', 'value' => 28, 'color' => '#0F4C81'],
+        ['label' => 'Power BI', 'value' => 22, 'color' => '#2A72D6'],
+        ['label' => 'Dashboard Design', 'value' => 16, 'color' => '#35A7FF'],
+        ['label' => 'Business Insight', 'value' => 14, 'color' => '#3AAFA9'],
+        ['label' => 'Automation', 'value' => 12, 'color' => '#F4A261'],
+        ['label' => 'Governance', 'value' => 8, 'color' => '#E76F51'],
+    ])->filter(fn ($item) => filled($item['label'] ?? null));
+
+    $chartLabels = $chartItems->pluck('label')->values()->all();
+    $chartValues = $chartItems->pluck('value')->map(fn ($value) => (int) $value)->values()->all();
+    $chartColors = $chartItems->pluck('color')->values()->all();
+    $chartCenterTop = 'Data';
+    $chartCenterBottom = __('Analyst');
+@endphp
+
+@push('styles')
+<style>
+    .analytics-identity {
+        background:
+            linear-gradient(140deg, rgba(15, 76, 129, 0.08), rgba(53, 167, 255, 0.08)),
+            #fff;
+        border: 1px solid rgba(53, 167, 255, 0.22);
+    }
+
+    .analytics-pill-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+    }
+
+    .analytics-pill {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(13, 110, 253, 0.2);
+        border-radius: 0.85rem;
+        padding: 0.7rem 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+        box-shadow: 0 8px 24px rgba(15, 76, 129, 0.08);
+    }
+
+    .analytics-pill strong {
+        color: #0f4c81;
+        font-size: 1.15rem;
+        line-height: 1;
+    }
+
+    .analytics-pill span {
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .analytics-chart-shell {
+        position: relative;
+        min-height: 280px;
+        border-radius: 1rem;
+        padding: 0.8rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(238, 245, 255, 0.8));
+        border: 1px solid rgba(15, 76, 129, 0.14);
+    }
+
+    @media (max-width: 767.98px) {
+        .analytics-pill-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-chart-shell {
+            min-height: 250px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 @if($slides->isNotEmpty())
     <div id="heroCarousel" class="carousel slide hero-shell mb-5 fade-in-up" data-bs-ride="carousel">
@@ -48,6 +124,32 @@
         <a href="{{ route('blog.index') }}" class="insight-pill insight-link">{{ __('Featured Articles') }}: <strong>{{ $posts->count() }}</strong></a>
         <a href="{{ route('portfolio.index') }}" class="insight-pill insight-link">{{ __('Featured Projects') }}: <strong>{{ $portfolioItems->count() }}</strong></a>
         <a href="{{ $slides->isNotEmpty() ? '#heroCarousel' : route('home') }}" class="insight-pill insight-link">{{ __('Active Slides') }}: <strong>{{ $slides->count() }}</strong></a>
+    </div>
+</section>
+
+<section class="analytics-identity clean-card p-4 p-lg-5 mb-4 fade-in-up fade-delay-2 section-decor">
+    <span class="decor-orb decor-orb-a" data-parallax="0.02"></span>
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-6">
+            <span class="section-kicker">{{ __('Professional Focus') }}</span>
+            <h3 class="section-title mb-2">{{ __('Data Analyst Expertise Snapshot') }}</h3>
+            <p class="text-muted mb-4">
+                {{ __('My delivery approach combines analytical depth, BI engineering, and business storytelling to transform raw data into trusted, decision-ready actions.') }}
+            </p>
+            <div class="analytics-pill-grid">
+                @foreach($chartItems as $item)
+                    <div class="analytics-pill">
+                        <strong>{{ (int) ($item['value'] ?? 0) }}%</strong>
+                        <span>{{ $item['label'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-chart-shell">
+                <canvas id="analystExpertiseChart" height="280" aria-label="Data Analyst expertise chart" role="img"></canvas>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -132,3 +234,84 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.getElementById('analystExpertiseChart');
+        if (!canvas || typeof Chart === 'undefined') {
+            return;
+        }
+
+        const centerLabelPlugin = {
+            id: 'centerLabel',
+            afterDraw(chart) {
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) {
+                    return;
+                }
+
+                const {ctx} = chart;
+                const x = meta.data[0].x;
+                const y = meta.data[0].y;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#0F4C81';
+                ctx.font = '700 24px Space Grotesk, Manrope, sans-serif';
+                ctx.fillText(@json($chartCenterTop), x, y - 10);
+                ctx.fillStyle = '#1F2937';
+                ctx.font = '600 16px Manrope, sans-serif';
+                ctx.fillText(@json($chartCenterBottom), x, y + 18);
+                ctx.restore();
+            }
+        };
+
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: @json($chartLabels),
+                datasets: [{
+                    data: @json($chartValues),
+                    backgroundColor: @json($chartColors),
+                    borderColor: '#ffffff',
+                    borderWidth: 4,
+                    hoverOffset: 8,
+                    spacing: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 8,
+                            padding: 16,
+                            color: '#334155',
+                            font: {
+                                family: 'Manrope',
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label(context) {
+                                return context.label + ': ' + context.parsed + '%';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [centerLabelPlugin]
+        });
+    });
+</script>
+@endpush

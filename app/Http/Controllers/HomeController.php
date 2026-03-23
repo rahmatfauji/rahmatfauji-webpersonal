@@ -11,12 +11,14 @@ class HomeController extends Controller
 {
     public function index()
     {
+        $profile = Profile::query()->oldest()->first();
+
         return view('home', [
             'slides' => Slide::query()
                 ->where('is_active', true)
                 ->orderBy('display_order')
                 ->get(),
-            'profile' => Profile::query()->latest()->first(),
+            'profile' => $profile,
             'posts' => BlogPost::query()
                 ->where('is_published', true)
                 ->latest('published_at')
@@ -33,7 +35,7 @@ class HomeController extends Controller
     public function profile()
     {
         return view('profile', [
-            'profile' => Profile::query()->latest()->first(),
+            'profile' => Profile::query()->oldest()->first(),
         ]);
     }
 

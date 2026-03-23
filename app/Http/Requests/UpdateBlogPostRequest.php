@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\RollsBackTempUploads;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateBlogPostRequest extends FormRequest
 {
+    use RollsBackTempUploads;
+
     public function authorize(): bool
     {
         return $this->user()?->role === 'admin';
@@ -24,6 +27,7 @@ class UpdateBlogPostRequest extends FormRequest
             'featured_image' => ['nullable', 'url', 'max:2048'],
             'published_at'   => ['nullable', 'date'],
             'is_published'   => ['nullable', 'boolean'],
+            'upload_token'   => ['nullable', 'string'],
         ];
     }
 
