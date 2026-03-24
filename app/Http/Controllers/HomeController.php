@@ -65,6 +65,9 @@ class HomeController extends Controller
         abort_unless($portfolioItem->is_active, 404);
         abort_if(empty($portfolioItem->project_url), 404);
 
+        $scheme = strtolower(parse_url($portfolioItem->project_url, PHP_URL_SCHEME) ?: '');
+        abort_unless(in_array($scheme, ['http', 'https'], true), 404);
+
         $portfolioItem->increment('view_count');
 
         return redirect()->away($portfolioItem->project_url);

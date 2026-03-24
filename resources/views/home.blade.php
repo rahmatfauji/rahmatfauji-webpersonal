@@ -220,7 +220,7 @@
                     <h5>{{ $item->title }}</h5>
                     <p class="mb-2">{{ $item->summary }}</p>
                     @if($item->project_url)
-                        <a class="text-primary text-decoration-none" href="{{ $item->project_url }}" target="_blank" rel="noreferrer">{{ __('Visit project') }}</a>
+                        <a class="text-primary text-decoration-none" href="{{ route('portfolio.visit', $item) }}" target="_blank" rel="noreferrer">{{ __('Visit project') }}</a>
                     @endif
                     @include('partials.share-buttons', [
                         'url' => $item->project_url ?: route('portfolio.index'),

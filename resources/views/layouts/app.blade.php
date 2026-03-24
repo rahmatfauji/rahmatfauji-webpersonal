@@ -14,7 +14,11 @@
         $whatsAppUrl = null;
         $mailUrl = null;
         $linkedinUrl = $publicProfile?->linkedin_url;
+        $linkedinScheme = $linkedinUrl ? strtolower(parse_url($linkedinUrl, PHP_URL_SCHEME) ?: '') : '';
+        $linkedinUrl = in_array($linkedinScheme, ['http', 'https'], true) ? $linkedinUrl : null;
         $githubUrl = $publicProfile?->github_url;
+        $githubScheme = $githubUrl ? strtolower(parse_url($githubUrl, PHP_URL_SCHEME) ?: '') : '';
+        $githubUrl = in_array($githubScheme, ['http', 'https'], true) ? $githubUrl : null;
         $socialProfiles = array_values(array_filter([$linkedinUrl, $githubUrl]));
     @endphp
     <meta charset="utf-8">
