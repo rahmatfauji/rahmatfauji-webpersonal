@@ -32,7 +32,8 @@
 
     <div class="col-md-6">
         <label class="form-label">{{ __('Project URL') }}</label>
-        <input type="url" name="project_url" value="{{ old('project_url', optional($item)->project_url) }}" class="form-control @error('project_url') is-invalid @enderror">
+        <input type="text" name="project_url" value="{{ old('project_url', optional($item)->project_url) }}" class="form-control @error('project_url') is-invalid @enderror" placeholder="https://example.com or /portfolio/project-slug">
+        <div class="form-text">{{ __('Use a full URL or an internal path starting with /.') }}</div>
         @error('project_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 

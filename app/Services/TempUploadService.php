@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -18,12 +19,20 @@ class TempUploadService
 
     public function finalizeUrl(?string $url, ?string $token, string $targetDirectory): ?string
     {
-        if (!$url || !$this->isValidToken($token)) {
+        if (!$url) {
             return $url;
         }
 
         $tempPath = $this->extractTempPathFromUrl($url, $token);
-        if (!$tempPath || !Storage::disk('public')->exists($tempPath)) {
+        if (!$tempPath) {
+            return $url;
+        }
+
+        $hasTempOnPublicDisk = Storage::disk('public')->exists($tempPath);
+        $legacyAbsolutePath = storage_path('app/public/' . ltrim($tempPath, '/'));
+        $hasTempOnLegacyPath = File::isFile($legacyAbsolutePath);
+
+        if (!$hasTempOnPublicDisk && !$hasTempOnLegacyPath) {
             return $url;
         }
 
@@ -32,14 +41,20 @@ class TempUploadService
         $newPath = 'uploads/' . trim($targetDirectory, '/') . '/' . $filename . ($extension ? '.' . $extension : '');
 
         Storage::disk('public')->makeDirectory('uploads/' . trim($targetDirectory, '/'));
-        Storage::disk('public')->move($tempPath, $newPath);
 
-        return asset('storage/' . $newPath);
+        if ($hasTempOnPublicDisk) {
+            Storage::disk('public')->move($tempPath, $newPath);
+        } else {
+            Storage::disk('public')->put($newPath, File::get($legacyAbsolutePath));
+            File::delete($legacyAbsolutePath);
+        }
+
+        return Storage::disk('public')->url($newPath);
     }
 
     public function finalizeContentUrls(?string $content, ?string $token, string $targetDirectory): ?string
     {
-        if (!$content || !$this->isValidToken($token)) {
+        if (!$content) {
             return $content;
         }
 
@@ -73,23 +88,29 @@ class TempUploadService
         return (bool) preg_match('/^[A-Za-z0-9_-]{10,100}$/', $token);
     }
 
-    private function extractTempPathFromUrl(string $url, string $token): ?string
+    private function extractTempPathFromUrl(string $url, ?string $token): ?string
     {
         $path = parse_url($url, PHP_URL_PATH);
         if (!is_string($path)) {
             return null;
         }
 
-        $needle = '/storage/' . $this->tempDirectory($token) . '/';
-        if (!str_contains($path, $needle)) {
+        if (!preg_match('~/(?:storage/)?(uploads/tmp/([A-Za-z0-9_-]{10,100})/[^?#]+)~', $path, $matches)) {
             return null;
         }
 
-        $storagePos = strpos($path, '/storage/');
-        if ($storagePos === false) {
+        $tempPath = $matches[1] ?? null;
+        $urlToken = $matches[2] ?? null;
+
+        if (!is_string($tempPath) || !is_string($urlToken) || !$this->isValidToken($urlToken)) {
             return null;
         }
 
-        return ltrim(substr($path, $storagePos + strlen('/storage/')), '/');
+        // If request token is provided and valid, keep strict matching.
+        if ($this->isValidToken($token) && $token !== $urlToken) {
+            return null;
+        }
+
+        return ltrim($tempPath, '/');
     }
 }

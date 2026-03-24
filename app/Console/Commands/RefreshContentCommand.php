@@ -52,14 +52,10 @@ class RefreshContentCommand extends Command
             $removed += count($files);
         }
 
-        $legacyInline = public_path('uploads/blog-inline');
-        if (is_dir($legacyInline)) {
-            $legacyFiles = glob($legacyInline . DIRECTORY_SEPARATOR . '*') ?: [];
-            foreach ($legacyFiles as $file) {
-                if (is_file($file) && @unlink($file)) {
-                    $removed++;
-                }
-            }
+        $legacyFiles = $disk->files('uploads/blog-inline');
+        if ($legacyFiles !== []) {
+            $disk->delete($legacyFiles);
+            $removed += count($legacyFiles);
         }
 
         return $removed;

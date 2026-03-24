@@ -10,6 +10,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Models\BlogPost;
 use App\Models\PortfolioItem;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,6 +92,71 @@ Route::middleware('auth')->post('/logout', [AuthController::class, 'logout'])->n
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/', [HomeController::class, 'adminDashboard'])->name('dashboard');
+    Route::get('/system/storage-diagnostic', function () {
+        $readEnvFileValue = static function (string $key): ?string {
+            $envPath = base_path('.env');
+            if (!is_file($envPath) || !is_readable($envPath)) {
+                return null;
+            }
+
+            $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false) {
+                return null;
+            }
+
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+                if ($trimmedLine === '' || str_starts_with($trimmedLine, '#')) {
+                    continue;
+                }
+
+                if (!str_starts_with($trimmedLine, $key . '=')) {
+                    continue;
+                }
+
+                $value = trim(substr($trimmedLine, strlen($key) + 1));
+
+                if ($value === '' || strtolower($value) === 'null') {
+                    return null;
+                }
+
+                return trim($value, "\"'");
+            }
+
+            return null;
+        };
+
+        $marker = '__storage_diagnostic_marker__';
+        $markerUrl = Storage::disk('public')->url($marker);
+
+        return response()->json([
+            'app_base_path' => base_path(),
+            'public_path' => public_path(),
+            'env_PUBLIC_STORAGE_PATH' => env('PUBLIC_STORAGE_PATH'),
+            'env_PUBLIC_STORAGE_URL' => env('PUBLIC_STORAGE_URL'),
+            'raw_env_PUBLIC_STORAGE_PATH' => $readEnvFileValue('PUBLIC_STORAGE_PATH'),
+            'raw_env_PUBLIC_STORAGE_URL' => $readEnvFileValue('PUBLIC_STORAGE_URL'),
+            'config_filesystem_default' => config('filesystems.default'),
+            'config_public_root' => config('filesystems.disks.public.root'),
+            'config_public_url' => config('filesystems.disks.public.url'),
+            'disk_public_url_example' => $markerUrl,
+            'disk_public_root_exists' => is_dir((string) config('filesystems.disks.public.root')),
+            'env_loaded_file' => file_exists(base_path('.env')) ? base_path('.env') : 'not-found',
+            'opcache_enabled' => function_exists('opcache_get_status') ? (bool) (opcache_get_status(false)['opcache_enabled'] ?? false) : false,
+        ]);
+    })->name('system.storage-diagnostic');
+
+    Route::get('/system/clear-runtime-cache', function () {
+        Artisan::call('optimize:clear');
+        $opcacheReset = function_exists('opcache_reset') ? @opcache_reset() : null;
+
+        return response()->json([
+            'ok' => true,
+            'message' => trim((string) Artisan::output()) ?: 'Runtime cache cleared.',
+            'opcache_reset' => $opcacheReset,
+        ]);
+    })->name('system.clear-runtime-cache');
+
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
     Route::post('/upload-image', [FileUploadController::class, 'uploadImage'])->name('upload-image')->middleware('throttle:upload');

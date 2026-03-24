@@ -43,7 +43,8 @@
 
     <div class="col-md-5">
         <label class="form-label">{{ __('Button URL') }}</label>
-        <input type="url" name="button_url" value="{{ old('button_url', optional($slide)->button_url) }}" class="form-control @error('button_url') is-invalid @enderror">
+        <input type="text" name="button_url" value="{{ old('button_url', optional($slide)->button_url) }}" class="form-control @error('button_url') is-invalid @enderror" placeholder="https://example.com or /portfolio">
+        <div class="form-text">{{ __('Use a full URL or an internal path starting with /.') }}</div>
         @error('button_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 

@@ -11,6 +11,8 @@ use App\Services\BlogPostService;
 use App\Services\TempUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 class BlogPostController extends Controller
@@ -115,20 +117,20 @@ class BlogPostController extends Controller
         ]);
 
         $image = $validated['image'];
-        $directory = public_path('uploads/blog-inline');
+        $directory = 'uploads/blog-inline';
 
-        if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
+        if (!Storage::disk('public')->exists($directory)) {
+            Storage::disk('public')->makeDirectory($directory);
         }
 
-        // Use MIME-detected extension — never trust the client-supplied filename extension
+        // Use MIME-detected extension; never trust the client-supplied filename extension.
         $extension = $image->guessExtension() ?? 'bin';
-        $filename = uniqid('blog_', true) . '.' . $extension;
-        $image->move($directory, $filename);
+        $filename = (string) Str::uuid() . '.' . $extension;
+        $path = $image->storeAs($directory, $filename, 'public');
 
         return response()->json([
-            'location' => asset('uploads/blog-inline/' . $filename),
-            'url' => asset('uploads/blog-inline/' . $filename),
+            'location' => Storage::disk('public')->url($path),
+            'url' => Storage::disk('public')->url($path),
         ]);
     }
 }

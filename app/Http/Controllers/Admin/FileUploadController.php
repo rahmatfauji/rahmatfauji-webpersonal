@@ -33,7 +33,7 @@ class FileUploadController extends Controller
 
         return response()->json([
             'success' => true,
-            'url' => asset('storage/' . $path),
+            'url' => Storage::disk('public')->url($path),
             'path' => $path,
             'temporary' => (bool) $tempToken,
         ]);

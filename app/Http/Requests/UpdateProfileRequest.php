@@ -25,7 +25,7 @@ class UpdateProfileRequest extends FormRequest
             'location'   => ['nullable', 'string', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:2048'],
             'github_url' => ['nullable', 'url', 'max:2048'],
-            'avatar_url' => ['nullable', 'url', 'max:2048'],
+            'avatar_url' => ['nullable', 'string', 'max:2048'],
             'expertise_chart' => ['required', 'array', 'min:3', 'max:8'],
             'expertise_chart.*.label' => ['required', 'string', 'max:100'],
             'expertise_chart.*.value' => ['required', 'integer', 'min:0', 'max:100'],
