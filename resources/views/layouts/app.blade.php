@@ -5,18 +5,14 @@
         $seoTitle = trim(strip_tags($__env->yieldContent('title', 'Rahmat Fauji')));
         $seoDescription = trim(strip_tags($__env->yieldContent('meta_description', 'Rahmat Fauji - Data Analytics, Power BI, and Power Apps portfolio, case studies, and practical insights.')));
         $seoCanonical = trim($__env->yieldContent('meta_canonical', url()->current()));
-        $faviconSvg = asset('favicon.svg');
+        $faviconSvg = asset('favicon.png');
         $seoImage = trim($__env->yieldContent('meta_image', $faviconSvg));
         $seoType = trim($__env->yieldContent('meta_type', 'website'));
         $seoRobots = request()->routeIs('admin.*') || request()->routeIs('login*') ? 'noindex, nofollow' : trim($__env->yieldContent('meta_robots', 'index, follow, max-image-preview:large'));
         $publicProfile = request()->routeIs('admin.*') ? null : \App\Models\Profile::query()->oldest()->first();
-        $rawPhone = $publicProfile?->phone;
-        $normalizedWhatsapp = $rawPhone ? preg_replace('/\D+/', '', $rawPhone) : null;
-        if ($normalizedWhatsapp && str_starts_with($normalizedWhatsapp, '0')) {
-            $normalizedWhatsapp = '62' . substr($normalizedWhatsapp, 1);
-        }
-        $whatsAppUrl = $normalizedWhatsapp ? 'https://wa.me/' . $normalizedWhatsapp . '?text=' . rawurlencode('Halo Rahmat, saya tertarik untuk berdiskusi lebih lanjut.') : null;
-        $mailUrl = $publicProfile?->email ? 'mailto:' . $publicProfile->email : null;
+        // Keep contact actions web-only to avoid external app access prompts on some mobile browsers.
+        $whatsAppUrl = null;
+        $mailUrl = null;
         $linkedinUrl = $publicProfile?->linkedin_url;
         $githubUrl = $publicProfile?->github_url;
         $socialProfiles = array_values(array_filter([$linkedinUrl, $githubUrl]));
@@ -183,7 +179,7 @@
                 <div class="small text-uppercase text-muted fw-semibold">{{ __('Quick Contact') }}</div>
                 <div class="fw-semibold">{{ $publicProfile->full_name }}</div>
                 <div class="small text-muted">{{ $publicProfile->title }}</div>
-                <div class="contact-fab-status">{{ __('Usually replies via WhatsApp or email') }}</div>
+                <div class="contact-fab-status">{{ __('Usually replies via LinkedIn or GitHub') }}</div>
             </div>
             <div class="d-grid gap-2">
                 @if($whatsAppUrl)
