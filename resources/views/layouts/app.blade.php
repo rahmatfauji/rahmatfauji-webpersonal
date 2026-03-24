@@ -5,7 +5,8 @@
         $seoTitle = trim(strip_tags($__env->yieldContent('title', 'Rahmat Fauji')));
         $seoDescription = trim(strip_tags($__env->yieldContent('meta_description', 'Rahmat Fauji - Data Analytics, Power BI, and Power Apps portfolio, case studies, and practical insights.')));
         $seoCanonical = trim($__env->yieldContent('meta_canonical', url()->current()));
-        $seoImage = trim($__env->yieldContent('meta_image', asset('favicon.ico')));
+        $faviconSvg = asset('favicon.svg');
+        $seoImage = trim($__env->yieldContent('meta_image', $faviconSvg));
         $seoType = trim($__env->yieldContent('meta_type', 'website'));
         $seoRobots = request()->routeIs('admin.*') || request()->routeIs('login*') ? 'noindex, nofollow' : trim($__env->yieldContent('meta_robots', 'index, follow, max-image-preview:large'));
         $publicProfile = request()->routeIs('admin.*') ? null : \App\Models\Profile::query()->oldest()->first();
@@ -23,6 +24,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $seoTitle }} | Rahmat Fauji</title>
+    <link rel="icon" type="image/svg+xml" href="{{ $faviconSvg }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     <meta name="description" content="{{ $seoDescription }}">
     <meta name="robots" content="{{ $seoRobots }}">
     <link rel="canonical" href="{{ $seoCanonical }}">
@@ -306,11 +309,7 @@
                     return;
                 }
 
-                try {
-                    await navigator.clipboard.writeText(url);
-                } catch (e) {
-                    console.warn(@json(__('Failed to copy share link.')), e);
-                }
+                window.prompt(@json(__('Copy this link manually:')), url);
             });
         });
 
