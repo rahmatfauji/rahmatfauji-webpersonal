@@ -34,7 +34,11 @@
     <div class="col-lg-8 fade-in-up fade-delay-1" data-fade-in>
         <div class="clean-card p-4">
             <h4 class="section-title">{{ __('About Me') }}</h4>
-            <p class="mb-0">{{ optional($profile)->bio ?? __('Please complete profile data from the admin panel.') }}</p>
+            @if(filled(optional($profile)->bio))
+                <p class="mb-0">{!! nl2br(e($profile->bio)) !!}</p>
+            @else
+                <p class="mb-0">{{ __('Please complete profile data from the admin panel.') }}</p>
+            @endif
         </div>
     </div>
 </div>

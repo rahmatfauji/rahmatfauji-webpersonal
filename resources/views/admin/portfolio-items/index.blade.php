@@ -56,12 +56,14 @@
                     <td>{{ $item->display_order }}</td>
                     <td>{{ $item->is_active ? __('Yes') : __('No') }}</td>
                     <td class="text-end">
-                        <a href="{{ route('admin.portfolio-items.edit', $item) }}" class="btn btn-sm btn-outline-primary">{{ __('Edit') }}</a>
-                        <form action="{{ route('admin.portfolio-items.destroy', $item) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ __('Delete this portfolio item?') }}')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger">{{ __('Delete') }}</button>
-                        </form>
+                        <div class="d-inline-flex justify-content-end align-items-center gap-2 flex-wrap">
+                            <a href="{{ route('admin.portfolio-items.edit', $item) }}" class="btn btn-sm btn-outline-primary">{{ __('Edit') }}</a>
+                            <form action="{{ route('admin.portfolio-items.destroy', $item) }}" method="POST" class="m-0" onsubmit="return confirm('{{ __('Delete this portfolio item?') }}')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger">{{ __('Delete') }}</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             @empty

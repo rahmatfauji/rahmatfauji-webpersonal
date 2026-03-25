@@ -164,6 +164,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/account/password', [AdminPasswordController::class, 'update'])->name('password.update');
     Route::post('/upload-image', [FileUploadController::class, 'uploadImage'])->name('upload-image')->middleware('throttle:upload');
     Route::resource('profiles', AdminProfileController::class)->except(['show']);
+    Route::delete('/slides/bulk-delete', [AdminSlideController::class, 'bulkDestroy'])->name('slides.bulk-destroy');
     Route::resource('slides', AdminSlideController::class)->except(['show']);
     Route::delete('/blog-posts/bulk-delete', [AdminBlogPostController::class, 'bulkDestroy'])->name('blog-posts.bulk-destroy');
     Route::resource('blog-posts', AdminBlogPostController::class)->except(['show']);

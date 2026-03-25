@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BlogPost;
 use App\Models\PortfolioItem;
+use App\Models\Slide;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,6 +22,11 @@ class MediaCleanupService
     public function cleanupPortfolioItemAssets(PortfolioItem $portfolioItem): void
     {
         $this->deleteByUrl($portfolioItem->image_url);
+    }
+
+    public function cleanupSlideAssets(Slide $slide): void
+    {
+        $this->deleteByUrl($slide->image_url);
     }
 
     public function deleteByUrl(?string $url): void

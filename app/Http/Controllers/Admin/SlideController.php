@@ -6,19 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSlideRequest;
 use App\Http\Requests\UpdateSlideRequest;
 use App\Models\Slide;
+use App\Services\MediaCleanupService;
 use App\Services\TempUploadService;
+use Illuminate\Http\Request;
 use Throwable;
 
 class SlideController extends Controller
 {
-    public function __construct(private TempUploadService $tempUploadService)
+    public function __construct(
+        private TempUploadService $tempUploadService,
+        private MediaCleanupService $mediaCleanupService
+    )
     {
     }
 
     public function index()
     {
+        $slides = Slide::query()->orderBy('display_order')->paginate(12);
+
+        session()->put('admin.bulk.slide_ids', $slides->getCollection()->pluck('id')->map(fn ($id) => (int) $id)->all());
+
         return view('admin.slides.index', [
-            'slides' => Slide::query()->orderBy('display_order')->paginate(12),
+            'slides' => $slides,
         ]);
     }
 
@@ -86,8 +95,47 @@ class SlideController extends Controller
 
     public function destroy(Slide $slide)
     {
+        $this->mediaCleanupService->cleanupSlideAssets($slide);
         $slide->delete();
 
         return redirect()->route('admin.slides.index')->with('status', __('Slide deleted successfully.'));
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:slides,id'],
+        ]);
+
+        $selectedIds = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $allowedIds = collect(session('admin.bulk.slide_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $forbiddenIds = array_diff($selectedIds, $allowedIds);
+        if (!empty($forbiddenIds)) {
+            return redirect()
+                ->route('admin.slides.index')
+                ->withErrors(['bulk_delete' => __('Invalid selection detected. Please reload this page and try again.')]);
+        }
+
+        $slides = Slide::query()
+            ->whereIn('id', $selectedIds)
+            ->get();
+
+        foreach ($slides as $slide) {
+            $this->mediaCleanupService->cleanupSlideAssets($slide);
+        }
+
+        $deletedCount = Slide::query()
+            ->whereIn('id', $selectedIds)
+            ->delete();
+
+        return redirect()
+            ->route('admin.slides.index')
+            ->with('status', trans_choice(':count slide deleted successfully.|:count slides deleted successfully.', $deletedCount, ['count' => $deletedCount]));
     }
 }
