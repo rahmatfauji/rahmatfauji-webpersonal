@@ -10,9 +10,13 @@
         $seoType = trim($__env->yieldContent('meta_type', 'website'));
         $seoRobots = request()->routeIs('admin.*') || request()->routeIs('login*') ? 'noindex, nofollow' : trim($__env->yieldContent('meta_robots', 'index, follow, max-image-preview:large'));
         $publicProfile = request()->routeIs('admin.*') ? null : \App\Models\Profile::query()->oldest()->first();
-        // Keep contact actions web-only to avoid external app access prompts on some mobile browsers.
-        $whatsAppUrl = null;
-        $mailUrl = null;
+        $rawPhone = preg_replace('/\D+/', '', (string) ($publicProfile?->phone ?? ''));
+        if ($rawPhone !== '' && str_starts_with($rawPhone, '0')) {
+            $rawPhone = '62' . ltrim($rawPhone, '0');
+        }
+        $whatsAppUrl = $rawPhone !== '' ? 'https://wa.me/' . $rawPhone : null;
+        $emailAddress = trim((string) ($publicProfile?->email ?? ''));
+        $mailUrl = filter_var($emailAddress, FILTER_VALIDATE_EMAIL) ? 'mailto:' . $emailAddress : null;
         $linkedinUrl = $publicProfile?->linkedin_url;
         $linkedinScheme = $linkedinUrl ? strtolower(parse_url($linkedinUrl, PHP_URL_SCHEME) ?: '') : '';
         $linkedinUrl = in_array($linkedinScheme, ['http', 'https'], true) ? $linkedinUrl : null;
@@ -176,14 +180,14 @@
     <div class="text-center footer-note">{{ __('Copyright') }} {{ date('Y') }} - Rahmat Fauji</div>
 </footer>
 
-@if($publicProfile && ($whatsAppUrl || $mailUrl || $linkedinUrl || $githubUrl))
+@if($publicProfile && ($whatsAppUrl || $mailUrl || $linkedinUrl))
     <div class="contact-fab is-attention" data-contact-fab>
         <div class="contact-fab-panel" id="contactFabPanel">
             <div class="mb-3">
                 <div class="small text-uppercase text-muted fw-semibold">{{ __('Quick Contact') }}</div>
                 <div class="fw-semibold">{{ $publicProfile->full_name }}</div>
                 <div class="small text-muted">{{ $publicProfile->title }}</div>
-                <div class="contact-fab-status">{{ __('Usually replies via LinkedIn or GitHub') }}</div>
+                <div class="contact-fab-status">{{ __('Usually replies via WhatsApp or Email') }}</div>
             </div>
             <div class="d-grid gap-2">
                 @if($whatsAppUrl)
@@ -222,19 +226,6 @@
                         <span class="contact-fab-badge contact-fab-badge-linkedin" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="currentColor" role="presentation">
                                 <path d="M6.94 8.5H3.56V20h3.38V8.5ZM5.25 3A1.97 1.97 0 0 0 3.28 5c0 1.1.88 2 1.95 2h.02a1.98 1.98 0 0 0 0-4ZM20 13.02c0-3.46-1.85-5.07-4.32-5.07-1.99 0-2.88 1.1-3.38 1.86V8.5H8.94c.05.86 0 11.5 0 11.5h3.37v-6.42c0-.34.02-.68.13-.92.27-.68.88-1.38 1.9-1.38 1.34 0 1.87 1.03 1.87 2.54V20H20v-6.98Z"/>
-                            </svg>
-                        </span>
-                    </a>
-                @endif
-                @if($githubUrl)
-                    <a href="{{ $githubUrl }}" target="_blank" rel="noreferrer" class="contact-fab-link contact-fab-link-github">
-                        <span class="contact-fab-copy">
-                            <strong>{{ __('GitHub') }}</strong>
-                            <span>{{ parse_url($githubUrl, PHP_URL_HOST) ?: $githubUrl }}</span>
-                        </span>
-                        <span class="contact-fab-badge contact-fab-badge-github" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="currentColor" role="presentation">
-                                <path d="M12 .5C5.65.5.5 5.8.5 12.34c0 5.23 3.3 9.66 7.88 11.23.58.11.8-.26.8-.58 0-.29-.02-1.24-.02-2.25-2.89.55-3.64-.72-3.87-1.39-.13-.35-.7-1.4-1.2-1.69-.42-.24-1.01-.84-.02-.85.94-.02 1.62.89 1.84 1.26 1.07 1.85 2.79 1.33 3.48 1.01.11-.79.42-1.33.76-1.64-2.56-.29-5.23-1.31-5.23-5.81 0-1.28.45-2.34 1.18-3.16-.11-.29-.52-1.5.11-3.11 0 0 .97-.32 3.19 1.2a10.7 10.7 0 0 1 5.8 0c2.22-1.53 3.19-1.2 3.19-1.2.63 1.61.22 2.82.11 3.11.74.82 1.18 1.86 1.18 3.16 0 4.52-2.69 5.52-5.25 5.81.43.38.8 1.11.8 2.26 0 1.64-.02 2.96-.02 3.37 0 .32.22.71.8.58 4.56-1.57 7.87-6 7.87-11.23C23.5 5.8 18.35.5 12 .5Z"/>
                             </svg>
                         </span>
                     </a>

@@ -8,6 +8,7 @@ use App\Http\Requests\StoreBlogPostRequest;
 use App\Http\Requests\UpdateBlogPostRequest;
 use App\Models\BlogPost;
 use App\Services\BlogPostService;
+use App\Services\MediaCleanupService;
 use App\Services\TempUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,14 +21,19 @@ class BlogPostController extends Controller
     public function __construct(
         private BlogPostRepositoryInterface $blogPostRepository,
         private BlogPostService $blogPostService,
-        private TempUploadService $tempUploadService
+        private TempUploadService $tempUploadService,
+        private MediaCleanupService $mediaCleanupService
     ) {
     }
 
     public function index()
     {
+        $posts = $this->blogPostRepository->paginate(10);
+
+        session()->put('admin.bulk.blog_post_ids', $posts->getCollection()->pluck('id')->map(fn ($id) => (int) $id)->all());
+
         return view('admin.blog-posts.index', [
-            'posts' => $this->blogPostRepository->paginate(10),
+            'posts' => $posts,
         ]);
     }
 
@@ -105,9 +111,50 @@ class BlogPostController extends Controller
 
     public function destroy(BlogPost $blogPost)
     {
+        $this->mediaCleanupService->cleanupBlogPostAssets($blogPost);
         $this->blogPostRepository->delete($blogPost);
 
         return redirect()->route('admin.blog-posts.index')->with('status', __('Article deleted successfully.'));
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:blog_posts,id'],
+        ]);
+
+        $posts = BlogPost::query()
+            ->whereIn('id', array_unique($validated['ids']))
+            ->get();
+
+        $requestedIds = $posts->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $allowedIds = collect(session('admin.bulk.blog_post_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $forbiddenIds = array_diff($requestedIds, $allowedIds);
+        if (!empty($forbiddenIds)) {
+            return redirect()
+                ->route('admin.blog-posts.index')
+                ->withErrors(['bulk_delete' => __('Invalid selection detected. Please reload this page and try again.')]);
+        }
+
+        $deletedCount = 0;
+
+        foreach ($posts as $post) {
+            $this->mediaCleanupService->cleanupBlogPostAssets($post);
+
+            if ($this->blogPostRepository->delete($post)) {
+                $deletedCount++;
+            }
+        }
+
+        return redirect()
+            ->route('admin.blog-posts.index')
+            ->with('status', trans_choice(':count article deleted successfully.|:count articles deleted successfully.', $deletedCount, ['count' => $deletedCount]));
     }
 
     public function uploadImage(Request $request): JsonResponse

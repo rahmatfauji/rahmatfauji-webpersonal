@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BlogPostController as AdminBlogPostController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\FileUploadController;
+use App\Http\Controllers\Admin\PasswordController as AdminPasswordController;
 use App\Http\Controllers\Admin\PortfolioItemController as AdminPortfolioItemController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\SlideController as AdminSlideController;
@@ -159,9 +160,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
+    Route::get('/account/password', [AdminPasswordController::class, 'edit'])->name('password.edit');
+    Route::put('/account/password', [AdminPasswordController::class, 'update'])->name('password.update');
     Route::post('/upload-image', [FileUploadController::class, 'uploadImage'])->name('upload-image')->middleware('throttle:upload');
     Route::resource('profiles', AdminProfileController::class)->except(['show']);
     Route::resource('slides', AdminSlideController::class)->except(['show']);
+    Route::delete('/blog-posts/bulk-delete', [AdminBlogPostController::class, 'bulkDestroy'])->name('blog-posts.bulk-destroy');
     Route::resource('blog-posts', AdminBlogPostController::class)->except(['show']);
+    Route::delete('/portfolio-items/bulk-delete', [AdminPortfolioItemController::class, 'bulkDestroy'])->name('portfolio-items.bulk-destroy');
     Route::resource('portfolio-items', AdminPortfolioItemController::class)->except(['show']);
 });

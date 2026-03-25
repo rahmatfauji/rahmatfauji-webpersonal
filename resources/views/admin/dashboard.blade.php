@@ -85,6 +85,7 @@
                 <a href="{{ route('admin.blog-posts.index') }}" class="btn btn-outline-primary">{{ __('Manage Blog') }}</a>
                 <a href="{{ route('admin.portfolio-items.index') }}" class="btn btn-outline-primary">{{ __('Manage Portfolio') }}</a>
                 <a href="{{ route('admin.slides.index') }}" class="btn btn-outline-primary">{{ __('Manage Slideshow') }}</a>
+                <a href="{{ route('admin.password.edit') }}" class="btn btn-outline-primary">{{ __('Change Password') }}</a>
                 <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-outline-primary">{{ __('Visitor Activity Logs') }}</a>
             </div>
         </div>
