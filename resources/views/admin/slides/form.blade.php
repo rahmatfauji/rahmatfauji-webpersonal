@@ -19,7 +19,7 @@
                 <input type="file" id="slide-image-input" accept="image/*" class="form-control @error('image_url') is-invalid @enderror" {{ optional($slide)->id ? '' : 'required' }}>
                 @error('image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 <input type="hidden" id="slide-image-value" name="image_url" value="{{ old('image_url', optional($slide)->image_url) }}">
-                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, WebP (max 5MB)') }}</div>
+                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, GIF, WebP, SVG (max 5MB)') }}</div>
             </div>
             @if(optional($slide)->image_url)
             <img id="slide-image-preview" src="{{ optional($slide)->image_url }}" alt="Slide" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;">
@@ -73,13 +73,31 @@
         const uploadToken = document.getElementById('upload-token').value;
         const slideImageInput = document.getElementById('slide-image-input');
         const slideImageValue = document.getElementById('slide-image-value');
-        const slideImagePreview = document.getElementById('slide-image-preview');
-        const slideImagePlaceholder = document.getElementById('slide-image-placeholder');
+        const formElement = slideImageInput.closest('form');
+
+        let imageUploadState = 'idle';
+
+        const setUploadFeedback = (message) => {
+            let feedback = document.getElementById('slide-image-upload-feedback');
+
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.id = 'slide-image-upload-feedback';
+                feedback.className = 'text-danger small mt-1';
+                slideImageInput.insertAdjacentElement('afterend', feedback);
+            }
+
+            feedback.textContent = message || '';
+            feedback.style.display = message ? 'block' : 'none';
+        };
 
         // Handle slide image upload
         slideImageInput.addEventListener('change', () => {
             const file = slideImageInput.files[0];
             if (!file) return;
+
+            imageUploadState = 'uploading';
+            setUploadFeedback('');
 
             const formData = new FormData();
             formData.append('image', file);
@@ -90,16 +108,35 @@
             loadingText.className = 'text-muted small';
             loadingText.textContent = '{{ __("Uploading...") }}';
             loadingText.style.cssText = 'width: 120px; height: 80px; display: flex; align-items: center; justify-content: center;';
-            
-            if (slideImagePlaceholder) slideImagePlaceholder.replaceWith(loadingText);
-            if (slideImagePreview) slideImagePreview.parentNode.removeChild(slideImagePreview);
+
+            const currentPreview = document.getElementById('slide-image-preview');
+            const currentPlaceholder = document.getElementById('slide-image-placeholder');
+
+            if (currentPlaceholder) {
+                currentPlaceholder.replaceWith(loadingText);
+            } else if (currentPreview) {
+                currentPreview.replaceWith(loadingText);
+            }
 
             fetch('{{ route("admin.upload-image") }}', {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': csrfToken },
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             })
-            .then(res => res.json())
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    const message = data.message || '{{ __("Image upload failed.") }}';
+                    throw new Error(message);
+                }
+
+                return data;
+            })
             .then(data => {
                 if (data.success) {
                     slideImageValue.value = data.url;
@@ -109,20 +146,36 @@
                     img.alt = 'Slide';
                     img.style.cssText = 'width: 120px; height: 80px; object-fit: cover; border-radius: 4px;';
                     loadingText.replaceWith(img);
+                    imageUploadState = 'success';
+                    setUploadFeedback('');
                 } else {
-                    alert('{{ __("Image upload failed.") }}');
-                    loadingText.remove();
-                    if (!slideImagePlaceholder) {
-                        const placeholder = document.createElement('div');
-                        placeholder.id = 'slide-image-placeholder';
-                        placeholder.style.cssText = 'width: 120px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
-                        placeholder.className = 'text-muted small';
-                        placeholder.textContent = '{{ __("No image") }}';
-                        loadingText.parentNode.appendChild(placeholder);
-                    }
+                    throw new Error('{{ __("Image upload failed.") }}');
                 }
             })
-            .catch(() => alert('{{ __("Image upload failed.") }}'));
+            .catch((error) => {
+                imageUploadState = 'failed';
+                setUploadFeedback(error.message || '{{ __("Image upload failed.") }}');
+
+                const fallback = document.createElement('div');
+                fallback.id = 'slide-image-placeholder';
+                fallback.style.cssText = 'width: 120px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
+                fallback.className = 'text-muted small';
+                fallback.textContent = '{{ __("No image") }}';
+                loadingText.replaceWith(fallback);
+            });
+        });
+
+        formElement.addEventListener('submit', (event) => {
+            if (slideImageInput.files.length > 0 && imageUploadState !== 'success') {
+                event.preventDefault();
+
+                if (imageUploadState === 'uploading') {
+                    setUploadFeedback('{{ __("Please wait until image upload is complete.") }}');
+                    return;
+                }
+
+                setUploadFeedback('{{ __("Image upload failed. Please choose a valid image and try again.") }}');
+            }
         });
     });
 </script>

@@ -13,7 +13,7 @@ class FileUploadController extends Controller
     public function uploadImage(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:5120'],
             'type' => ['nullable', 'in:blog,portfolio,profile,slide'],
             'temp_token' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'],
         ]);

@@ -79,6 +79,11 @@ class SlideController extends Controller
             $uploadToken,
             'slide'
         );
+
+        if (blank($validated['image_url'])) {
+            $validated['image_url'] = $slide->image_url;
+        }
+
         $validated['is_active'] = $request->boolean('is_active');
 
         try {
