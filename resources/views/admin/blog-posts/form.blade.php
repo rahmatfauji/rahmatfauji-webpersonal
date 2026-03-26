@@ -92,6 +92,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
 <script>
+    const uploadImageUrl = @json(route('admin.upload-image'));
+    const messageContentEmpty = @json(__('Content cannot be empty.'));
+    const messageImageUploadFailed = @json(__('Image upload failed.'));
+    const messageUploading = @json(__('Uploading...'));
+    const messageNoImage = @json(__('No image'));
+
     // Wait for DOM to be fully ready
     document.addEventListener('DOMContentLoaded', function() {
         const titleInput = document.getElementById('blog-title');
@@ -161,7 +167,7 @@
                 content === '<br>' ||
                 content === '') {
                 e.preventDefault();
-                alert('{{ __('Content cannot be empty.') }}');
+                alert(messageContentEmpty);
                 return false;
             }
             
@@ -185,7 +191,7 @@
                 formData.append('type', 'blog');
                 formData.append('temp_token', uploadToken);
 
-                fetch('{{ route('admin.upload-image') }}', {
+                fetch(uploadImageUrl, {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': csrfToken },
                     body: formData
@@ -196,10 +202,10 @@
                         const range = quill.getSelection();
                         quill.insertEmbed(range.index, 'image', data.url);
                     } else {
-                        alert('{{ __('Image upload failed.') }}');
+                        alert(messageImageUploadFailed);
                     }
                 })
-                .catch(() => alert('{{ __('Image upload failed.') }}'));
+                .catch(() => alert(messageImageUploadFailed));
             };
         };
 
@@ -218,10 +224,10 @@
 
             const loadingText = document.createElement('div');
             loadingText.className = 'text-muted small';
-            loadingText.textContent = '{{ __('Uploading...') }}';
+            loadingText.textContent = messageUploading;
             if (featuredImagePlaceholder) featuredImagePlaceholder.replaceWith(loadingText);
 
-            fetch('{{ route('admin.upload-image') }}', {
+            fetch(uploadImageUrl, {
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken },
                 body: formData
@@ -237,19 +243,19 @@
                     img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px;';
                     loadingText.replaceWith(img);
                 } else {
-                    alert('{{ __('Image upload failed.') }}');
+                    alert(messageImageUploadFailed);
                     loadingText.remove();
                     if (!featuredImagePlaceholder) {
                         const placeholder = document.createElement('div');
                         placeholder.id = 'featured-image-placeholder';
                         placeholder.style.cssText = 'width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
                         placeholder.className = 'text-muted small';
-                        placeholder.textContent = '{{ __('No image') }}';
+                        placeholder.textContent = messageNoImage;
                         loadingText.parentNode.appendChild(placeholder);
                     }
                 }
             })
-            .catch(() => alert('{{ __('Image upload failed.') }}'));
+            .catch(() => alert(messageImageUploadFailed));
         });
     });
 </script>
