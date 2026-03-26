@@ -40,8 +40,83 @@
     <div class="col-12">
         <label class="form-label">{{ __('Content') }}</label>
         <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet">
+        <style>
+            #content-editor .ql-editor img {
+                max-width: 100%;
+                height: auto;
+                cursor: pointer;
+            }
+
+            #content-editor .ql-container {
+                position: relative;
+            }
+
+            .quill-image-resize-overlay {
+                position: absolute;
+                border: 2px solid #2563eb;
+                border-radius: 0.5rem;
+                box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+                pointer-events: none;
+                display: none;
+                z-index: 20;
+            }
+
+            .quill-image-resize-handle {
+                position: absolute;
+                right: -0.5rem;
+                bottom: -0.5rem;
+                width: 1rem;
+                height: 1rem;
+                border: 2px solid #ffffff;
+                border-radius: 999px;
+                background: #2563eb;
+                box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+                cursor: nwse-resize;
+                pointer-events: auto;
+            }
+
+            .quill-image-resize-toolbar {
+                position: absolute;
+                left: 50%;
+                bottom: calc(100% + 0.55rem);
+                transform: translateX(-50%);
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.35rem;
+                border-radius: 999px;
+                background: rgba(15, 23, 42, 0.92);
+                box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+                pointer-events: auto;
+                white-space: nowrap;
+            }
+
+            .quill-image-resize-button {
+                border: 0;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.14);
+                color: #ffffff;
+                font-size: 0.72rem;
+                font-weight: 700;
+                line-height: 1;
+                padding: 0.4rem 0.55rem;
+            }
+
+            .quill-image-resize-button:hover,
+            .quill-image-resize-button:focus {
+                background: rgba(96, 165, 250, 0.9);
+                color: #ffffff;
+            }
+
+            .quill-image-resize-hint {
+                margin-top: 0.5rem;
+                font-size: 0.82rem;
+                color: #64748b;
+            }
+        </style>
         <div id="content-editor" style="height: 400px;" class="@error('content') border-danger @enderror"></div>
         <textarea id="content-value" name="content" style="display:none;">{{ old('content', optional($post)->content) }}</textarea>
+        <div class="quill-image-resize-hint">{{ __('Click an image in the editor, then drag the blue handle to resize it.') }}</div>
         @error('content')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
     </div>
 
@@ -88,6 +163,7 @@
     const messageImageUploadFailed = @json(__('Image upload failed.'));
     const messageUploading = @json(__('Uploading...'));
     const messageNoImage = @json(__('No image'));
+    const imageResizePresets = [25, 50, 75, 100];
 
     // Wait for DOM to be fully ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -137,9 +213,181 @@
             }
         });
 
+        const imageResizeOverlay = document.createElement('div');
+        imageResizeOverlay.className = 'quill-image-resize-overlay';
+
+        const imageResizeToolbar = document.createElement('div');
+        imageResizeToolbar.className = 'quill-image-resize-toolbar';
+
+        const imageResizeHandle = document.createElement('div');
+        imageResizeHandle.className = 'quill-image-resize-handle';
+
+        imageResizeOverlay.appendChild(imageResizeToolbar);
+        imageResizeOverlay.appendChild(imageResizeHandle);
+        quill.container.appendChild(imageResizeOverlay);
+
+        let selectedImage = null;
+        let resizeFrame = null;
+        let resizeState = null;
+
+        const normalizeEditorImage = (image) => {
+            if (!image) {
+                return;
+            }
+
+            image.style.maxWidth = '100%';
+            image.style.height = 'auto';
+
+            if (!image.style.width) {
+                image.style.width = '100%';
+            }
+        };
+
+        const syncEditorContent = () => {
+            contentValue.value = quill.root.innerHTML;
+        };
+
+        const updateResizeOverlay = () => {
+            if (!selectedImage || !selectedImage.isConnected) {
+                imageResizeOverlay.style.display = 'none';
+                return;
+            }
+
+            const containerRect = quill.container.getBoundingClientRect();
+            const imageRect = selectedImage.getBoundingClientRect();
+            const top = imageRect.top - containerRect.top + quill.container.scrollTop;
+            const left = imageRect.left - containerRect.left + quill.container.scrollLeft;
+
+            imageResizeOverlay.style.display = 'block';
+            imageResizeOverlay.style.top = `${top}px`;
+            imageResizeOverlay.style.left = `${left}px`;
+            imageResizeOverlay.style.width = `${imageRect.width}px`;
+            imageResizeOverlay.style.height = `${imageRect.height}px`;
+        };
+
+        const requestResizeOverlayUpdate = () => {
+            if (resizeFrame) {
+                cancelAnimationFrame(resizeFrame);
+            }
+
+            resizeFrame = requestAnimationFrame(updateResizeOverlay);
+        };
+
+        const clearSelectedImage = () => {
+            selectedImage = null;
+            imageResizeOverlay.style.display = 'none';
+        };
+
+        const selectImage = (image) => {
+            selectedImage = image;
+            normalizeEditorImage(selectedImage);
+            requestResizeOverlayUpdate();
+        };
+
+        const applyImageWidth = (widthPercent) => {
+            if (!selectedImage) {
+                return;
+            }
+
+            selectedImage.style.width = `${widthPercent}%`;
+            selectedImage.style.height = 'auto';
+            syncEditorContent();
+            requestResizeOverlayUpdate();
+        };
+
+        imageResizePresets.forEach((widthPercent) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'quill-image-resize-button';
+            button.textContent = `${widthPercent}%`;
+            button.addEventListener('click', () => applyImageWidth(widthPercent));
+            imageResizeToolbar.appendChild(button);
+        });
+
+        const resetButton = document.createElement('button');
+        resetButton.type = 'button';
+        resetButton.className = 'quill-image-resize-button';
+        resetButton.textContent = 'Auto';
+        resetButton.addEventListener('click', () => {
+            if (!selectedImage) {
+                return;
+            }
+
+            selectedImage.style.width = '';
+            selectedImage.style.height = 'auto';
+            normalizeEditorImage(selectedImage);
+            syncEditorContent();
+            requestResizeOverlayUpdate();
+        });
+        imageResizeToolbar.appendChild(resetButton);
+
+        imageResizeHandle.addEventListener('mousedown', (event) => {
+            if (!selectedImage) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const bounds = selectedImage.getBoundingClientRect();
+            resizeState = {
+                startX: event.clientX,
+                startWidth: bounds.width,
+                naturalWidth: selectedImage.naturalWidth || bounds.width
+            };
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!selectedImage || !resizeState) {
+                return;
+            }
+
+            const deltaX = event.clientX - resizeState.startX;
+            const nextWidth = Math.max(120, Math.min(resizeState.naturalWidth, resizeState.startWidth + deltaX));
+            selectedImage.style.width = `${nextWidth}px`;
+            selectedImage.style.height = 'auto';
+            requestResizeOverlayUpdate();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!resizeState) {
+                return;
+            }
+
+            resizeState = null;
+            syncEditorContent();
+            requestResizeOverlayUpdate();
+        });
+
+        quill.root.addEventListener('click', (event) => {
+            if (event.target instanceof HTMLImageElement) {
+                selectImage(event.target);
+                return;
+            }
+
+            clearSelectedImage();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!quill.container.contains(event.target) && !imageResizeOverlay.contains(event.target)) {
+                clearSelectedImage();
+            }
+        });
+
+        quill.root.querySelectorAll('img').forEach(normalizeEditorImage);
+        quill.on('text-change', () => {
+            quill.root.querySelectorAll('img').forEach(normalizeEditorImage);
+            syncEditorContent();
+            requestResizeOverlayUpdate();
+        });
+
+        quill.root.addEventListener('scroll', requestResizeOverlayUpdate);
+        window.addEventListener('resize', requestResizeOverlayUpdate);
+
         // Set initial content
         if (contentValue.value.trim()) {
             quill.root.innerHTML = contentValue.value;
+            quill.root.querySelectorAll('img').forEach(normalizeEditorImage);
         }
 
         // Sync Quill content to textarea before submit
@@ -192,6 +440,14 @@
                     if (data.success) {
                         const range = quill.getSelection();
                         quill.insertEmbed(range.index, 'image', data.url);
+                        setTimeout(() => {
+                            const insertedImage = Array.from(quill.root.querySelectorAll('img')).find((image) => image.src === data.url);
+                            if (insertedImage) {
+                                normalizeEditorImage(insertedImage);
+                                selectImage(insertedImage);
+                                syncEditorContent();
+                            }
+                        }, 0);
                     } else {
                         alert(messageImageUploadFailed);
                     }
