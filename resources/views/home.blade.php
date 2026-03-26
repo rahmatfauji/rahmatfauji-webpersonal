@@ -83,7 +83,7 @@
 
 @section('content')
 @if($slides->isNotEmpty())
-    <div id="heroCarousel" class="carousel slide hero-shell mb-5 fade-in-up" data-bs-ride="carousel">
+    <div id="heroCarousel" class="carousel slide hero-shell mb-3 fade-in-up" data-bs-ride="carousel">
         <div class="carousel-indicators hero-indicators">
             @foreach($slides as $slide)
                 <button
@@ -118,7 +118,7 @@
     </div>
 @endif
 
-<section class="insight-ribbon clean-card p-3 p-lg-4 mb-4 fade-in-up fade-delay-1 section-decor">
+<section class="insight-ribbon clean-card p-2 p-lg-3 mb-3 fade-in-up fade-delay-1 section-decor">
     <span class="decor-orb decor-orb-b" data-parallax="0.03"></span>
     <div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3">
         <a href="{{ route('blog.index') }}" class="insight-pill insight-link">{{ __('Featured Articles') }}: <strong>{{ $posts->count() }}</strong></a>
@@ -127,7 +127,7 @@
     </div>
 </section>
 
-<section class="analytics-identity clean-card p-4 p-lg-5 mb-4 fade-in-up fade-delay-2 section-decor">
+<section class="analytics-identity clean-card p-3 p-lg-4 mb-3 fade-in-up fade-delay-2 section-decor">
     <span class="decor-orb decor-orb-a" data-parallax="0.02"></span>
     <div class="row g-4 align-items-center">
         <div class="col-lg-6">
@@ -153,9 +153,9 @@
     </div>
 </section>
 
-<div class="row g-4 mb-4">
+<div class="row g-3 mb-3">
     <div class="col-lg-7">
-        <div class="clean-card p-4 h-100 fade-in-up fade-delay-2">
+        <div class="clean-card p-3 h-100 fade-in-up fade-delay-2">
             <span class="badge blue-badge mb-3">{{ __('About Me') }}</span>
             <h2 class="section-title">{{ optional($profile)->full_name ?? __('Your Name') }}</h2>
             @if(filled(optional($profile)->title))
@@ -172,7 +172,7 @@
         </div>
     </div>
     <div class="col-lg-5 d-none d-lg-block">
-        <div class="soft-panel p-4 h-100 fade-in-up fade-delay-3">
+        <div class="soft-panel p-3 h-100 fade-in-up fade-delay-3">
             <h5 class="section-title">{{ __('Quick Menu') }}</h5>
             <div class="d-grid gap-2 mt-3">
                 <a href="{{ route('profile') }}" class="btn btn-outline-primary">{{ __('View Profile') }}</a>
@@ -183,7 +183,7 @@
     </div>
 </div>
 
-<section class="mb-5 fade-in-up fade-delay-2 section-decor">
+<section class="mb-3 fade-in-up fade-delay-2 section-decor">
     <span class="decor-orb decor-orb-c" data-parallax="0.04"></span>
     <div class="d-flex justify-content-between align-items-end mb-3 section-header-group">
         <div>
@@ -192,7 +192,7 @@
         </div>
         <a href="{{ route('blog.index') }}" class="btn btn-sm btn-primary">{{ __('All Articles') }}</a>
     </div>
-    <div class="row g-4">
+    <div class="row g-3">
         @forelse($posts as $post)
             <div class="col-md-4">
                 <article class="clean-card h-100 p-3 public-article-card">
@@ -221,7 +221,7 @@
         </div>
         <a href="{{ route('portfolio.index') }}" class="btn btn-sm btn-primary">{{ __('All Projects') }}</a>
     </div>
-    <div class="row g-4">
+    <div class="row g-3">
         @forelse($portfolioItems as $item)
             <div class="col-md-6 col-lg-4">
                 <article class="clean-card h-100 p-3 public-portfolio-card">
