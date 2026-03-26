@@ -3,7 +3,9 @@
     @if($method !== 'POST')
         @method($method)
     @endif
-    @php($uploadToken = old('upload_token', (string) \Illuminate\Support\Str::uuid()))
+    @php
+        $uploadToken = old('upload_token', (string) \Illuminate\Support\Str::uuid());
+    @endphp
     <input type="hidden" id="upload-token" name="upload_token" value="{{ $uploadToken }}">
 
     <div class="col-md-8">
