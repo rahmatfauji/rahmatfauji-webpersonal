@@ -708,6 +708,11 @@ body {
     border-radius: 1.25rem;
     overflow: hidden;
     box-shadow: 0 20px 45px rgba(8, 48, 107, 0.2);
+    max-height: 200px;
+}
+
+.hero-shell .carousel-inner {
+    max-height: 200px;
 }
 
 .public-page .hero-shell {
@@ -1382,6 +1387,14 @@ body {
         padding: 0.55rem 0.25rem;
     }
 
+    .hero-shell {
+        max-height: 160px;
+    }
+
+    .hero-shell .carousel-inner {
+        max-height: 160px;
+    }
+
     .hero-slide {
         min-height: 160px;
         max-height: 160px;
@@ -1438,6 +1451,11 @@ body {
 
     .hero-shell {
         border-radius: 0.85rem;
+        max-height: 160px;
+    }
+
+    .hero-shell .carousel-inner {
+        max-height: 160px;
     }
 
     .hero-slide {
