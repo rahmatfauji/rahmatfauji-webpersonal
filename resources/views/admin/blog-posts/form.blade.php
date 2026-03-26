@@ -127,10 +127,10 @@
                 <input type="file" id="featured-image-input" accept="image/*" class="form-control @error('featured_image') is-invalid @enderror">
                 @error('featured_image')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 <input type="hidden" id="featured-image-value" name="featured_image" value="{{ old('featured_image', optional($post)->featured_image) }}">
-                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, WebP (max 5MB)') }}</div>
+                <div class="form-text mt-2">{{ __('Recommended: 1200×675px landscape (16:9 aspect ratio) · JPG, PNG, WebP · Max 5MB') }}</div>
             </div>
             @if(optional($post)->featured_image)
-            <img id="featured-image-preview" src="{{ optional($post)->featured_image }}" alt="Featured" style="width: 100px; height: 80px; object-fit: cover; border-radius: 4px;">
+            <img id="featured-image-preview" src="{{ optional($post)->featured_image }}" alt="Featured" style="width: 100px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;">
             @else
             <div id="featured-image-placeholder" style="width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;" class="text-muted small">{{ __('No image') }}</div>
             @endif
@@ -155,6 +155,24 @@
         <a href="{{ route('admin.blog-posts.index') }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
     </div>
 </form>
+
+<!-- Crop Preview Modal for Featured Image -->
+<div id="crop-preview-modal" class="crop-preview-modal">
+    <div class="crop-preview-container">
+        <div class="crop-preview-header">
+            <h5>{{ __('Preview Featured Image') }}</h5>
+            <button type="button" class="crop-preview-close" id="crop-preview-close">&times;</button>
+        </div>
+        <div class="crop-preview-canvas">
+            <img id="crop-preview-image" src="" alt="Crop Preview" class="crop-preview-image">
+            <div class="crop-preview-overlay"></div>
+        </div>
+        <div class="crop-preview-footer">
+            <button type="button" class="crop-preview-btn crop-preview-btn-cancel" id="crop-preview-cancel">{{ __('Cancel') }}</button>
+            <button type="button" class="crop-preview-btn crop-preview-btn-apply" id="crop-preview-apply">{{ __('Use This Image') }}</button>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
 <script>
@@ -459,7 +477,60 @@
         // Update toolbar image button handler
         quill.getModule('toolbar').addHandler('image', imageHandler);
 
-        // Handle featured image upload
+        // Handle featured image upload with crop preview
+        const cropModal = document.getElementById('crop-preview-modal');
+        const cropImage = document.getElementById('crop-preview-image');
+        const cropCloseBtn = document.getElementById('crop-preview-close');
+        const cropCancelBtn = document.getElementById('crop-preview-cancel');
+        const cropApplyBtn = document.getElementById('crop-preview-apply');
+        let pendingImageUrl = null;
+
+        const showCropModal = (imageUrl) => {
+            cropImage.src = imageUrl;
+            cropModal.classList.add('is-active');
+        };
+
+        const hideCropModal = () => {
+            cropModal.classList.remove('is-active');
+            pendingImageUrl = null;
+            cropImage.src = '';
+        };
+
+        const applyFeaturedImage = (imageUrl) => {
+            featuredImageValue.value = imageUrl;
+            const img = document.createElement('img');
+            img.id = 'featured-image-preview';
+            img.src = imageUrl;
+            img.alt = 'Featured';
+            img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;';
+            img.addEventListener('click', () => {
+                showCropModal(imageUrl);
+            });
+            const placeholder = document.getElementById('featured-image-placeholder');
+            const existing = document.getElementById('featured-image-preview');
+            if (existing) {
+                existing.replaceWith(img);
+            } else if (placeholder) {
+                placeholder.replaceWith(img);
+            }
+            hideCropModal();
+        };
+
+        cropCloseBtn.addEventListener('click', hideCropModal);
+        cropCancelBtn.addEventListener('click', hideCropModal);
+        cropApplyBtn.addEventListener('click', () => {
+            if (pendingImageUrl) {
+                applyFeaturedImage(pendingImageUrl);
+            }
+        });
+
+        // Close modal when clicking outside
+        cropModal.addEventListener('click', (e) => {
+            if (e.target === cropModal) {
+                hideCropModal();
+            }
+        });
+
         featuredImageInput.addEventListener('change', () => {
             const file = featuredImageInput.files[0];
             if (!file) return;
@@ -472,7 +543,10 @@
             const loadingText = document.createElement('div');
             loadingText.className = 'text-muted small';
             loadingText.textContent = messageUploading;
-            if (featuredImagePlaceholder) featuredImagePlaceholder.replaceWith(loadingText);
+            const placeholder = document.getElementById('featured-image-placeholder');
+            const preview = document.getElementById('featured-image-preview');
+            if (placeholder) placeholder.replaceWith(loadingText);
+            if (preview) preview.replaceWith(loadingText);
 
             fetch(uploadImageUrl, {
                 method: 'POST',
@@ -482,27 +556,23 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    featuredImageValue.value = data.url;
-                    const img = document.createElement('img');
-                    img.id = 'featured-image-preview';
-                    img.src = data.url;
-                    img.alt = 'Featured';
-                    img.style.cssText = 'width: 100px; height: 80px; object-fit: cover; border-radius: 4px;';
-                    loadingText.replaceWith(img);
+                    pendingImageUrl = data.url;
+                    showCropModal(data.url);
                 } else {
                     alert(messageImageUploadFailed);
                     loadingText.remove();
-                    if (!featuredImagePlaceholder) {
-                        const placeholder = document.createElement('div');
-                        placeholder.id = 'featured-image-placeholder';
-                        placeholder.style.cssText = 'width: 100px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
-                        placeholder.className = 'text-muted small';
-                        placeholder.textContent = messageNoImage;
-                        loadingText.parentNode.appendChild(placeholder);
-                    }
                 }
             })
             .catch(() => alert(messageImageUploadFailed));
         });
+
+        // Allow clicking on existing featured image to crop
+        const existingPreview = document.getElementById('featured-image-preview');
+        if (existingPreview) {
+            existingPreview.style.cursor = 'pointer';
+            existingPreview.addEventListener('click', () => {
+                showCropModal(existingPreview.src);
+            });
+        }
     });
 </script>

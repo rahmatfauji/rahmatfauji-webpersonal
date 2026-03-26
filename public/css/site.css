@@ -586,6 +586,7 @@ body {
     min-height: 250px;
     border-radius: 1rem;
     overflow: hidden;
+    aspect-ratio: 16 / 9;
 }
 
 .featured-article-media img {
@@ -713,6 +714,13 @@ body {
     background-size: cover;
     background-position: center;
     position: relative;
+    aspect-ratio: 16 / 9;
+}
+
+.hero-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .hero-shell .carousel-indicators.hero-indicators {
@@ -889,9 +897,13 @@ body {
 .portfolio-media-wrap {
     overflow: hidden;
     border-radius: 0.9rem 0.9rem 0 0;
+    aspect-ratio: 16 / 9;
 }
 
 .public-page .portfolio-media-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     transition: transform 0.4s ease;
 }
 
@@ -1071,6 +1083,125 @@ body {
     max-width: 100%;
     height: auto;
     border-radius: 0.5rem;
+}
+
+/* ---- Image Crop Preview Modal ---- */
+.crop-preview-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.crop-preview-modal.is-active {
+    display: flex;
+}
+
+.crop-preview-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    max-width: 800px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.crop-preview-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.crop-preview-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.crop-preview-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crop-preview-close:hover {
+    color: #0b4fc2;
+}
+
+.crop-preview-canvas {
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.crop-preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+}
+
+.crop-preview-overlay {
+    position: absolute;
+    inset: 0;
+    border: 2px dashed rgba(11, 79, 194, 0.3);
+    pointer-events: none;
+}
+
+.crop-preview-footer {
+    padding: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.crop-preview-btn {
+    padding: 0.6rem 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.crop-preview-btn-cancel {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.crop-preview-btn-cancel:hover {
+    background: #e8e8e8;
+}
+
+.crop-preview-btn-apply {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    color: white;
+    border-color: transparent;
+}
+
+.crop-preview-btn-apply:hover {
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
 }
 
 .rich-content iframe,
