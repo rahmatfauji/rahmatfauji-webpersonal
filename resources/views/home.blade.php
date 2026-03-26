@@ -158,8 +158,17 @@
         <div class="clean-card p-4 h-100 fade-in-up fade-delay-2">
             <span class="badge blue-badge mb-3">{{ __('About Me') }}</span>
             <h2 class="section-title">{{ optional($profile)->full_name ?? __('Your Name') }}</h2>
-            <p class="text-muted mb-2">{{ optional($profile)->title ?? __('Add your profile details from the admin panel.') }}</p>
-            <p class="mb-0">{{ optional($profile)->bio ?? __('Your bio will appear here once profile data is saved.') }}</p>
+            @if(filled(optional($profile)->title))
+                <p class="text-muted mb-2">{!! nl2br(e($profile->title)) !!}</p>
+            @else
+                <p class="text-muted mb-2">{{ __('Add your profile details from the admin panel.') }}</p>
+            @endif
+
+            @if(filled(optional($profile)->bio))
+                <p class="mb-0">{!! nl2br(e($profile->bio)) !!}</p>
+            @else
+                <p class="mb-0">{{ __('Your bio will appear here once profile data is saved.') }}</p>
+            @endif
         </div>
     </div>
     <div class="col-lg-5 d-none d-lg-block">
