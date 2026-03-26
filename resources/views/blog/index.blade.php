@@ -37,9 +37,9 @@
             <label class="form-label">{{ __('Tag') }}</label>
             <input type="text" name="tag" value="{{ $activeTag }}" class="form-control" placeholder="{{ __('Tag') }}">
         </div>
-        <div class="col-md-4 col-lg-2 d-grid gap-2">
-            <button type="submit" class="btn btn-primary">{{ __('Apply') }}</button>
-            <a href="{{ route('blog.index') }}" class="btn btn-outline-secondary">{{ __('Reset') }}</a>
+        <div class="col-md-4 col-lg-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary flex-fill">{{ __('Apply') }}</button>
+            <a href="{{ route('blog.index') }}" class="btn btn-sm btn-outline-secondary flex-fill">{{ __('Reset') }}</a>
         </div>
     </form>
 
