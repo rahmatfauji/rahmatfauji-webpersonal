@@ -59,7 +59,7 @@ class HomeController extends Controller
                 });
             })
             ->when($category !== '', fn ($query) => $query->where('category', $category))
-            ->when($tag !== '', fn ($query) => $query->where('tags', 'like', '%"' . addcslashes($tag, '"') . '"%'))
+            ->when($tag !== '', fn ($query) => $query->whereRaw('LOWER(tags) LIKE ?', ['%"' . Str::lower(addcslashes($tag, '"')) . '"%']))
             ->latest('published_at');
 
         return view('blog.index', [
@@ -95,7 +95,7 @@ class HomeController extends Controller
                     }
 
                     foreach (($blogPost->tags ?? []) as $relatedTag) {
-                        $subQuery->orWhere('tags', 'like', '%"' . addcslashes((string) $relatedTag, '"') . '"%');
+                        $subQuery->orWhereRaw('LOWER(tags) LIKE ?', ['%"' . Str::lower(addcslashes((string) $relatedTag, '"')) . '"%']);
                     }
                 });
             })
@@ -159,20 +159,33 @@ class HomeController extends Controller
 
     private function extractPopularTags(Collection $tagsCollection, int $limit = 8): Collection
     {
-        return $tagsCollection
+        $groupedTags = $tagsCollection
             ->filter(fn ($tags) => is_array($tags))
             ->flatten()
             ->filter(fn ($tag) => is_string($tag) && trim($tag) !== '')
-            ->map(fn (string $tag) => Str::title(trim($tag)))
-            ->countBy(fn (string $tag) => Str::lower($tag))
-            ->sortDesc()
+            ->reduce(function (Collection $carry, string $tag) {
+                $name = trim($tag);
+                $normalizedTag = Str::lower($name);
+                $existing = $carry->get($normalizedTag);
+
+                if ($existing === null) {
+                    $carry->put($normalizedTag, [
+                        'name' => $name,
+                        'count' => 1,
+                    ]);
+
+                    return $carry;
+                }
+
+                $existing['count']++;
+                $carry->put($normalizedTag, $existing);
+
+                return $carry;
+            }, collect());
+
+        return $groupedTags
+            ->sortByDesc('count')
             ->take($limit)
-            ->map(function (int $count, string $normalizedTag) {
-                return [
-                    'name' => Str::title($normalizedTag),
-                    'count' => $count,
-                ];
-            })
             ->values();
     }
 }
