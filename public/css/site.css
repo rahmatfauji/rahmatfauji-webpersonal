@@ -687,6 +687,12 @@ body {
     border-radius: 1rem;
     border: 1px solid rgba(37, 99, 235, 0.12);
     background: rgba(248, 251, 255, 0.92);
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.related-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.12);
 }
 
 .featured-article-card .share-dropdown {
