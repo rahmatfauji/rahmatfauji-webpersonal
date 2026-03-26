@@ -302,6 +302,7 @@ body {
     padding: 1rem;
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.96);
+    color: #0f172a;
     border: 1px solid rgba(15, 76, 129, 0.15);
     box-shadow: 0 18px 50px rgba(15, 76, 129, 0.18);
     opacity: 0;
@@ -310,6 +311,14 @@ body {
     transform-origin: bottom right;
     transition: opacity 0.24s ease, transform 0.24s ease;
     backdrop-filter: blur(14px);
+}
+
+.contact-fab-panel .text-muted {
+    color: #475569 !important;
+}
+
+.contact-fab-panel .fw-semibold {
+    color: #0f172a;
 }
 
 .contact-fab.is-open .contact-fab-panel {
@@ -392,7 +401,14 @@ body {
     color: #1f2937;
     border: 1px solid rgba(15, 76, 129, 0.08);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.92));
+    color: #0f172a !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.contact-fab-link:visited,
+.contact-fab-link:hover,
+.contact-fab-link:focus {
+    color: #0f172a !important;
 }
 
 .contact-fab-link:hover {
@@ -424,14 +440,14 @@ body {
 
 .contact-fab-copy strong {
     display: block;
-    color: #0f4c81;
+    color: #0f3557;
     font-size: 0.95rem;
 }
 
 .contact-fab-copy span {
     display: block;
     font-size: 0.82rem;
-    color: #64748b;
+    color: #334155;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1353,6 +1369,35 @@ body {
 [data-bs-theme="dark"] .public-page .navbar .navbar-collapse {
     background: rgba(15, 23, 42, 0.97);
     backdrop-filter: blur(14px);
+}
+
+[data-bs-theme="dark"] .contact-fab-panel {
+    background: rgba(15, 23, 42, 0.96);
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+[data-bs-theme="dark"] .contact-fab-link {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
+    border-color: rgba(148, 163, 184, 0.22);
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .contact-fab-link:visited,
+[data-bs-theme="dark"] .contact-fab-link:hover,
+[data-bs-theme="dark"] .contact-fab-link:focus {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .contact-fab-panel .text-muted,
+[data-bs-theme="dark"] .contact-fab-copy span {
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .contact-fab-panel .fw-semibold,
+[data-bs-theme="dark"] .contact-fab-copy strong {
+    color: #f8fafc;
 }
 
 /* ---- Cards ---- */
