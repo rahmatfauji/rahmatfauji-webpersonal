@@ -21,23 +21,25 @@
 <div class="row g-4">
     @forelse($items as $item)
         <div class="col-md-6 col-lg-4 fade-in-up fade-delay-1" data-fade-in>
-            <article class="clean-card h-100 public-portfolio-card">
+            <article class="clean-card h-100 public-portfolio-card d-flex flex-column">
                 @if($item->image_url)
-                    <div class="portfolio-media-wrap image-skeleton" style="height: 180px;">
-                        <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="img-fluid rounded-top js-skeleton-image" style="height: 180px; width: 100%; object-fit: cover;">
+                    <div class="portfolio-media-wrap image-skeleton">
+                        <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="img-fluid rounded-top js-skeleton-image">
                     </div>
                 @endif
-                <div class="p-3">
+                <div class="p-3 d-flex flex-column flex-grow-1">
                     <span class="badge blue-badge mb-2">{{ $item->category }}</span>
                     <h5>{{ $item->title }}</h5>
-                    <p>{{ $item->summary }}</p>
-                    @if($item->project_url)
-                        <a href="{{ route('portfolio.visit', $item) }}" class="text-decoration-none" target="_blank" rel="noreferrer">{{ __('View project') }}</a>
-                    @endif
-                    @include('partials.share-buttons', [
-                        'url' => $item->project_url ?: route('portfolio.index'),
-                        'title' => $item->title,
-                    ])
+                    <p class="mb-auto">{{ $item->summary }}</p>
+                    <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+                        @if($item->project_url)
+                            <a href="{{ route('portfolio.visit', $item) }}" class="btn btn-sm btn-primary" target="_blank" rel="noreferrer">{{ __('View project') }}</a>
+                        @endif
+                        @include('partials.share-buttons', [
+                            'url' => $item->project_url ?: route('portfolio.index'),
+                            'title' => $item->title,
+                        ])
+                    </div>
                 </div>
             </article>
         </div>

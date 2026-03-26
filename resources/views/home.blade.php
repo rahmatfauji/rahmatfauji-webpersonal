@@ -195,15 +195,19 @@
     <div class="row g-3">
         @forelse($posts as $post)
             <div class="col-md-4">
-                <article class="clean-card h-100 p-3 public-article-card">
-                    <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>
-                    <h5>{{ $post->title }}</h5>
-                    <p class="mb-2">{{ $post->excerpt }}</p>
-                    <a href="{{ route('blog.show', $post->slug) }}" class="text-primary text-decoration-none">{{ __('Read more') }}</a>
-                    @include('partials.share-buttons', [
-                        'url' => route('blog.show', $post),
-                        'title' => $post->title,
-                    ])
+                <article class="clean-card h-100 public-article-card d-flex flex-column">
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>
+                        <h5>{{ $post->title }}</h5>
+                        <p class="mb-auto">{{ $post->excerpt }}</p>
+                        <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+                            <a href="{{ route('blog.show', $post->slug) }}" class="btn btn-sm btn-primary">{{ __('Read more') }}</a>
+                            @include('partials.share-buttons', [
+                                'url' => route('blog.show', $post),
+                                'title' => $post->title,
+                            ])
+                        </div>
+                    </div>
                 </article>
             </div>
         @empty
@@ -212,7 +216,7 @@
     </div>
 </section>
 
-<section class="fade-in-up fade-delay-3 section-decor">
+<section class="mb-4 fade-in-up fade-delay-3 section-decor">
     <span class="decor-orb decor-orb-a" data-parallax="-0.05"></span>
     <div class="d-flex justify-content-between align-items-end mb-3 section-header-group">
         <div>
@@ -224,17 +228,21 @@
     <div class="row g-3">
         @forelse($portfolioItems as $item)
             <div class="col-md-6 col-lg-4">
-                <article class="clean-card h-100 p-3 public-portfolio-card">
-                    <span class="badge blue-badge mb-2">{{ $item->category }}</span>
-                    <h5>{{ $item->title }}</h5>
-                    <p class="mb-2">{{ $item->summary }}</p>
-                    @if($item->project_url)
-                        <a class="text-primary text-decoration-none" href="{{ route('portfolio.visit', $item) }}" target="_blank" rel="noreferrer">{{ __('Visit project') }}</a>
-                    @endif
-                    @include('partials.share-buttons', [
-                        'url' => $item->project_url ?: route('portfolio.index'),
-                        'title' => $item->title,
-                    ])
+                <article class="clean-card h-100 public-portfolio-card d-flex flex-column">
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <span class="badge blue-badge mb-2">{{ $item->category }}</span>
+                        <h5>{{ $item->title }}</h5>
+                        <p class="mb-auto">{{ $item->summary }}</p>
+                        <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+                            @if($item->project_url)
+                                <a class="btn btn-sm btn-primary" href="{{ route('portfolio.visit', $item) }}" target="_blank" rel="noreferrer">{{ __('Visit project') }}</a>
+                            @endif
+                            @include('partials.share-buttons', [
+                                'url' => $item->project_url ?: route('portfolio.index'),
+                                'title' => $item->title,
+                            ])
+                        </div>
+                    </div>
                 </article>
             </div>
         @empty

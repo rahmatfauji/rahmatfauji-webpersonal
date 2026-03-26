@@ -3,8 +3,8 @@
     $shareId = 'share-' . md5(($title ?? 'share') . '|' . $url);
 @endphp
 
-<div class="dropdown mt-3 share-dropdown">
-    <button class="btn btn-sm btn-outline-primary share-trigger dropdown-toggle" type="button" id="{{ $shareId }}" data-bs-toggle="dropdown" aria-expanded="false">
+<div class="dropdown share-dropdown">
+    <button class="btn btn-sm btn-outline-secondary share-trigger dropdown-toggle" type="button" id="{{ $shareId }}" data-bs-toggle="dropdown" aria-expanded="false">
         {{ __('Share') }}
     </button>
     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="{{ $shareId }}">

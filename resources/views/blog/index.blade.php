@@ -55,31 +55,35 @@
     @endif
 </section>
 
-<div class="row g-4">
+<div class="row g-3">
     @forelse($posts as $post)
         <div class="col-md-6 col-lg-4 fade-in-up fade-delay-1" data-fade-in>
-            <article class="clean-card h-100 p-3 public-article-card">
+            <article class="clean-card h-100 public-article-card d-flex flex-column">
                 @if($post->featured_image)
-                    <div class="mb-3 image-skeleton" style="height: 180px; overflow: hidden; border-radius: 0.5rem;">
-                        <img src="{{ $post->featured_image }}" alt="{{ $post->title }}" class="img-fluid js-skeleton-image" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="article-media-wrap image-skeleton">
+                        <img src="{{ $post->featured_image }}" alt="{{ $post->title }}" class="img-fluid rounded-top js-skeleton-image">
                     </div>
                 @endif
-                <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                    @if($post->category)
-                        <span class="badge blue-badge">{{ $post->category }}</span>
-                    @endif
-                    @foreach(($post->tags ?? []) as $tag)
-                        <a href="{{ route('blog.index', ['tag' => $tag]) }}" class="blog-inline-tag">#{{ $tag }}</a>
-                    @endforeach
+                <div class="p-3 d-flex flex-column flex-grow-1">
+                    <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        @if($post->category)
+                            <span class="badge blue-badge">{{ $post->category }}</span>
+                        @endif
+                        @foreach(($post->tags ?? []) as $tag)
+                            <a href="{{ route('blog.index', ['tag' => $tag]) }}" class="blog-inline-tag">#{{ $tag }}</a>
+                        @endforeach
+                    </div>
+                    <h5>{{ $post->title }}</h5>
+                    <p class="mb-auto">{{ $post->excerpt }}</p>
+                    <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+                        <a href="{{ route('blog.show', $post->slug) }}" class="btn btn-sm btn-primary">{{ __('Read details') }}</a>
+                        @include('partials.share-buttons', [
+                            'url' => route('blog.show', $post),
+                            'title' => $post->title,
+                        ])
+                    </div>
                 </div>
-                <h5>{{ $post->title }}</h5>
-                <p>{{ $post->excerpt }}</p>
-                <a href="{{ route('blog.show', $post->slug) }}" class="text-decoration-none">{{ __('Read details') }}</a>
-                @include('partials.share-buttons', [
-                    'url' => route('blog.show', $post),
-                    'title' => $post->title,
-                ])
             </article>
         </div>
     @empty

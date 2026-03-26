@@ -19,7 +19,7 @@
                 <input type="file" id="slide-image-input" accept="image/*" class="form-control @error('image_url') is-invalid @enderror" {{ optional($slide)->id ? '' : 'required' }}>
                 @error('image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 <input type="hidden" id="slide-image-value" name="image_url" value="{{ old('image_url', optional($slide)->image_url) }}">
-                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, GIF, WebP, SVG (max 5MB)') }}</div>
+                <div class="form-text mt-2">{{ __('Recommended: 1920×1080px landscape (16:9) · JPG, PNG, WebP · Max 5MB') }}</div>
             </div>
             @if(optional($slide)->image_url)
             <img id="slide-image-preview" src="{{ optional($slide)->image_url }}" alt="Slide" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;">
@@ -67,6 +67,24 @@
     </div>
 </form>
 
+<!-- Crop Preview Modal -->
+<div id="crop-preview-modal" class="crop-preview-modal">
+    <div class="crop-preview-container">
+        <div class="crop-preview-header">
+            <h5>{{ __('Preview Slide Image') }}</h5>
+            <button type="button" class="crop-preview-close" id="crop-preview-close">&times;</button>
+        </div>
+        <div class="crop-preview-canvas">
+            <img id="crop-preview-image" src="" alt="Crop Preview" class="crop-preview-image">
+            <div class="crop-preview-overlay"></div>
+        </div>
+        <div class="crop-preview-footer">
+            <button type="button" class="crop-preview-btn crop-preview-btn-cancel" id="crop-preview-cancel">{{ __('Cancel') }}</button>
+            <button type="button" class="crop-preview-btn crop-preview-btn-apply" id="crop-preview-apply">{{ __('Use This Image') }}</button>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('input[name="_token"]').value;
@@ -75,7 +93,45 @@
         const slideImageValue = document.getElementById('slide-image-value');
         const formElement = slideImageInput.closest('form');
 
+        const cropModal = document.getElementById('crop-preview-modal');
+        const cropImage = document.getElementById('crop-preview-image');
+        const cropCloseBtn = document.getElementById('crop-preview-close');
+        const cropCancelBtn = document.getElementById('crop-preview-cancel');
+        const cropApplyBtn = document.getElementById('crop-preview-apply');
+        let pendingImageUrl = null;
         let imageUploadState = 'idle';
+
+        const showCropModal = (imageUrl) => {
+            cropImage.src = imageUrl;
+            cropModal.classList.add('is-active');
+        };
+
+        const hideCropModal = () => {
+            cropModal.classList.remove('is-active');
+            pendingImageUrl = null;
+            cropImage.src = '';
+        };
+
+        const applySlideImage = (imageUrl) => {
+            slideImageValue.value = imageUrl;
+            const img = document.createElement('img');
+            img.id = 'slide-image-preview';
+            img.src = imageUrl;
+            img.alt = 'Slide';
+            img.style.cssText = 'width: 120px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;';
+            img.addEventListener('click', () => showCropModal(imageUrl));
+            const placeholder = document.getElementById('slide-image-placeholder');
+            const existing = document.getElementById('slide-image-preview');
+            if (existing) existing.replaceWith(img);
+            else if (placeholder) placeholder.replaceWith(img);
+            imageUploadState = 'success';
+            hideCropModal();
+        };
+
+        cropCloseBtn.addEventListener('click', hideCropModal);
+        cropCancelBtn.addEventListener('click', hideCropModal);
+        cropApplyBtn.addEventListener('click', () => { if (pendingImageUrl) applySlideImage(pendingImageUrl); });
+        cropModal.addEventListener('click', (e) => { if (e.target === cropModal) hideCropModal(); });
 
         const setUploadFeedback = (message) => {
             let feedback = document.getElementById('slide-image-upload-feedback');
@@ -139,15 +195,9 @@
             })
             .then(data => {
                 if (data.success) {
-                    slideImageValue.value = data.url;
-                    const img = document.createElement('img');
-                    img.id = 'slide-image-preview';
-                    img.src = data.url;
-                    img.alt = 'Slide';
-                    img.style.cssText = 'width: 120px; height: 80px; object-fit: cover; border-radius: 4px;';
-                    loadingText.replaceWith(img);
-                    imageUploadState = 'success';
-                    setUploadFeedback('');
+                    pendingImageUrl = data.url;
+                    loadingText.replaceWith(document.createElement('span'));
+                    showCropModal(data.url);
                 } else {
                     throw new Error('{{ __("Image upload failed.") }}');
                 }
@@ -177,5 +227,11 @@
                 setUploadFeedback('{{ __("Image upload failed. Please choose a valid image and try again.") }}');
             }
         });
+
+            const existingPreview = document.getElementById('slide-image-preview');
+            if (existingPreview) {
+                existingPreview.style.cursor = 'pointer';
+                existingPreview.addEventListener('click', () => showCropModal(existingPreview.src));
+            }
     });
 </script>

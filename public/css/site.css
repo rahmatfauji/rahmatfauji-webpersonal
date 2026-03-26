@@ -787,17 +787,17 @@ body {
     letter-spacing: -0.04em;
     line-height: 1.1;
     max-width: 25ch;
-    font-size: clamp(0.82rem, 2.5vw, 1.8rem);
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
 }
 
 .public-page .hero-content .lead {
     max-width: 52ch;
     color: rgba(255, 255, 255, 0.92);
-    font-size: clamp(0.68rem, 1.4vw, 0.9rem);
+    font-size: clamp(0.88rem, 2vw, 0.95rem);
 }
 
 .public-page .hero-content .btn {
-    font-size: clamp(0.68rem, 1.3vw, 0.85rem);
+    font-size: clamp(0.8rem, 1.8vw, 0.88rem);
     padding: clamp(0.25rem, 0.8vw, 0.5rem) clamp(0.5rem, 1.5vw, 1rem);
 }
 
@@ -917,6 +917,25 @@ body {
     overflow: hidden;
     border-radius: 0.9rem 0.9rem 0 0;
     aspect-ratio: 16 / 9;
+    width: 100%;
+}
+
+.article-media-wrap {
+    overflow: hidden;
+    border-radius: 0.9rem 0.9rem 0 0;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+}
+
+.article-media-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.public-page .public-article-card:hover .article-media-wrap img {
+    transform: scale(1.04);
 }
 
 .public-page .portfolio-media-wrap img {

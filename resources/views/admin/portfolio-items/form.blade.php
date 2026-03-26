@@ -44,7 +44,7 @@
                 <input type="file" id="portfolio-image-input" accept="image/*" class="form-control @error('image_url') is-invalid @enderror">
                 @error('image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 <input type="hidden" id="portfolio-image-value" name="image_url" value="{{ old('image_url', optional($item)->image_url) }}">
-                <div class="form-text mt-2">{{ __('Supported formats: JPG, PNG, WebP (max 5MB)') }}</div>
+                <div class="form-text mt-2">{{ __('Recommended: 1200×675px landscape (16:9) · JPG, PNG, WebP · Max 5MB') }}</div>
             </div>
             @if(optional($item)->image_url)
             <img id="portfolio-image-preview" src="{{ optional($item)->image_url }}" alt="Portfolio" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
@@ -73,16 +73,70 @@
     </div>
 </form>
 
-<script>
-    const csrfToken = document.querySelector('input[name="_token"]').value;
-    const uploadToken = document.getElementById('upload-token').value;
-    const portfolioImageInput = document.getElementById('portfolio-image-input');
-    const portfolioImageValue = document.getElementById('portfolio-image-value');
-    const portfolioImagePreview = document.getElementById('portfolio-image-preview');
-    const portfolioImagePlaceholder = document.getElementById('portfolio-image-placeholder');
+<!-- Crop Preview Modal -->
+<div id="crop-preview-modal" class="crop-preview-modal">
+    <div class="crop-preview-container">
+        <div class="crop-preview-header">
+            <h5>{{ __('Preview Portfolio Image') }}</h5>
+            <button type="button" class="crop-preview-close" id="crop-preview-close">&times;</button>
+        </div>
+        <div class="crop-preview-canvas">
+            <img id="crop-preview-image" src="" alt="Crop Preview" class="crop-preview-image">
+            <div class="crop-preview-overlay"></div>
+        </div>
+        <div class="crop-preview-footer">
+            <button type="button" class="crop-preview-btn crop-preview-btn-cancel" id="crop-preview-cancel">{{ __('Cancel') }}</button>
+            <button type="button" class="crop-preview-btn crop-preview-btn-apply" id="crop-preview-apply">{{ __('Use This Image') }}</button>
+        </div>
+    </div>
+</div>
 
-    // Handle portfolio image upload
-    portfolioImageInput.addEventListener('change', () => {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = document.querySelector('input[name="_token"]').value;
+        const uploadToken = document.getElementById('upload-token').value;
+        const portfolioImageInput = document.getElementById('portfolio-image-input');
+        const portfolioImageValue = document.getElementById('portfolio-image-value');
+
+        const cropModal = document.getElementById('crop-preview-modal');
+        const cropImage = document.getElementById('crop-preview-image');
+        const cropCloseBtn = document.getElementById('crop-preview-close');
+        const cropCancelBtn = document.getElementById('crop-preview-cancel');
+        const cropApplyBtn = document.getElementById('crop-preview-apply');
+        let pendingImageUrl = null;
+
+        const showCropModal = (imageUrl) => {
+            cropImage.src = imageUrl;
+            cropModal.classList.add('is-active');
+        };
+
+        const hideCropModal = () => {
+            cropModal.classList.remove('is-active');
+            pendingImageUrl = null;
+            cropImage.src = '';
+        };
+
+        const applyPortfolioImage = (imageUrl) => {
+            portfolioImageValue.value = imageUrl;
+            const img = document.createElement('img');
+            img.id = 'portfolio-image-preview';
+            img.src = imageUrl;
+            img.alt = 'Portfolio';
+            img.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer;';
+            img.addEventListener('click', () => showCropModal(imageUrl));
+            const placeholder = document.getElementById('portfolio-image-placeholder');
+            const existing = document.getElementById('portfolio-image-preview');
+            if (existing) existing.replaceWith(img);
+            else if (placeholder) placeholder.replaceWith(img);
+            hideCropModal();
+        };
+
+        cropCloseBtn.addEventListener('click', hideCropModal);
+        cropCancelBtn.addEventListener('click', hideCropModal);
+        cropApplyBtn.addEventListener('click', () => { if (pendingImageUrl) applyPortfolioImage(pendingImageUrl); });
+        cropModal.addEventListener('click', (e) => { if (e.target === cropModal) hideCropModal(); });
+
+        portfolioImageInput.addEventListener('change', () => {
         const file = portfolioImageInput.files[0];
         if (!file) return;
 
@@ -91,40 +145,49 @@
         formData.append('type', 'portfolio');
         formData.append('temp_token', uploadToken);
 
-        const loadingText = document.createElement('div');
-        loadingText.className = 'text-muted small';
-        loadingText.textContent = '{{ __('Uploading...') }}';
-        if (portfolioImagePlaceholder) portfolioImagePlaceholder.replaceWith(loadingText);
-        if (portfolioImagePreview) portfolioImagePreview.parentNode.removeChild(portfolioImagePreview);
+            const loadingText = document.createElement('div');
+            loadingText.className = 'text-muted small';
+            loadingText.textContent = '{{ __("Uploading...") }}';
+            loadingText.style.cssText = 'width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;';
+            const placeholder = document.getElementById('portfolio-image-placeholder');
+            const existing = document.getElementById('portfolio-image-preview');
+            if (placeholder) placeholder.replaceWith(loadingText);
+            else if (existing) existing.replaceWith(loadingText);
 
-        fetch('{{ route('admin.upload-image') }}', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                portfolioImageValue.value = data.url;
-                const img = document.createElement('img');
-                img.id = 'portfolio-image-preview';
-                img.src = data.url;
-                img.alt = 'Portfolio';
-                img.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border-radius: 4px;';
-                loadingText.replaceWith(img);
-            } else {
-                alert('{{ __('Image upload failed.') }}');
-                loadingText.remove();
-                if (!portfolioImagePlaceholder) {
-                    const placeholder = document.createElement('div');
-                    placeholder.id = 'portfolio-image-placeholder';
-                    placeholder.style.cssText = 'width: 100px; height: 100px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
-                    placeholder.className = 'text-muted small';
-                    placeholder.textContent = '{{ __('No image') }}';
-                    loadingText.parentNode.appendChild(placeholder);
+            fetch('{{ route("admin.upload-image") }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || '{{ __("Image upload failed.") }}');
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
+                    pendingImageUrl = data.url;
+                    loadingText.replaceWith(document.createElement('span'));
+                    showCropModal(data.url);
+                } else {
+                    throw new Error('{{ __("Image upload failed.") }}');
                 }
-            }
-        })
-        .catch(() => alert('{{ __('Image upload failed.') }}'));
+            })
+            .catch((error) => {
+                const fallback = document.createElement('div');
+                fallback.id = 'portfolio-image-placeholder';
+                fallback.style.cssText = 'width: 100px; height: 100px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;';
+                fallback.className = 'text-muted small';
+                fallback.textContent = '{{ __("No image") }}';
+                loadingText.replaceWith(fallback);
+                alert(error.message || '{{ __("Image upload failed.") }}');
+            });
+        });
+
+        const existingPreview = document.getElementById('portfolio-image-preview');
+        if (existingPreview) {
+            existingPreview.style.cursor = 'pointer';
+            existingPreview.addEventListener('click', () => showCropModal(existingPreview.src));
+        }
     });
 </script>
