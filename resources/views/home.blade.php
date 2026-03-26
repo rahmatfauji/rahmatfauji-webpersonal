@@ -99,7 +99,7 @@
         <div class="carousel-inner">
             @foreach($slides as $slide)
                 <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
-                    <div class="hero-slide d-flex align-items-center p-4 p-lg-5 section-decor" style="background-image: url('{{ $slide->image_url }}');">
+                    <div class="hero-slide d-flex align-items-center p-3 p-lg-4 section-decor" style="background-image: url('{{ $slide->image_url }}');">
                         <span class="decor-orb decor-orb-a" data-parallax="0.05"></span>
                         <span class="decor-orb decor-orb-c" data-parallax="-0.03"></span>
                         <div class="hero-content text-white" data-parallax="-0.08">
