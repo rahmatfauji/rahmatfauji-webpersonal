@@ -3,10 +3,7 @@
     @if($method !== 'POST')
         @method($method)
     @endif
-    @php
-        $uploadToken = old('upload_token', (string) \Illuminate\Support\Str::uuid());
-    @endphp
-    <input type="hidden" id="upload-token" name="upload_token" value="{{ $uploadToken }}">
+    <input type="hidden" id="upload-token" name="upload_token" value="{{ old('upload_token', (string) \Illuminate\Support\Str::uuid()) }}">
 
     <div class="col-md-8">
         <label class="form-label">{{ __('Title') }}</label>
@@ -27,17 +24,9 @@
         @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
-    @php
-        $tagsValue = old('tags');
-
-        if ($tagsValue === null) {
-            $tagsValue = implode(', ', optional($post)->tags ?? []);
-        }
-    @endphp
-
     <div class="col-md-6">
         <label class="form-label">{{ __('Tags') }}</label>
-        <input type="text" name="tags" value="{{ $tagsValue }}" class="form-control @error('tags') is-invalid @enderror" placeholder="{{ __('Power BI, Dashboard, SQL') }}">
+        <input type="text" name="tags" value="{{ old('tags', is_array(optional($post)->tags) ? implode(', ', optional($post)->tags) : '') }}" class="form-control @error('tags') is-invalid @enderror" placeholder="{{ __('Power BI, Dashboard, SQL') }}">
         <div class="form-text">{{ __('Separate tags with commas.') }}</div>
         @error('tags')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
