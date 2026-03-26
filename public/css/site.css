@@ -716,7 +716,7 @@ body {
 }
 
 .hero-slide {
-    min-height: 320px;
+    min-height: 250px;
     background-size: cover;
     background-position: center;
     position: relative;
@@ -1382,7 +1382,7 @@ body {
     }
 
     .hero-slide {
-        min-height: 280px;
+        min-height: 220px;
     }
 
     .hero-shell .carousel-indicators.hero-indicators {
@@ -1439,7 +1439,7 @@ body {
     }
 
     .hero-slide {
-        min-height: 250px;
+        min-height: 180px;
         padding: 1.25rem !important;
     }
 
