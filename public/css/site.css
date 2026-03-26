@@ -1400,6 +1400,21 @@ body {
         max-height: 160px;
     }
 
+    .hero-content .display-5,
+    .hero-content .display-6 {
+        font-size: 1.4rem;
+        line-height: 1.15;
+    }
+
+    .hero-content .lead {
+        font-size: 0.9rem;
+    }
+
+    .hero-content .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
     .hero-shell .carousel-indicators.hero-indicators {
         bottom: 0.75rem;
         gap: 0.42rem;
@@ -1407,11 +1422,12 @@ body {
 
     .hero-content .display-5,
     .hero-content .display-6 {
-        font-size: 1.65rem;
+        font-size: 1.75rem;
+        line-height: 1.1;
     }
 
     .hero-content .lead {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .public-page .nav-link.active::after {
@@ -1480,6 +1496,23 @@ body {
 
     .hero-content {
         max-width: 100%;
+    }
+
+    .hero-content .display-5,
+    .hero-content .display-6 {
+        font-size: 1.25rem;
+        line-height: 1.2;
+        max-width: 100%;
+    }
+
+    .hero-content .lead {
+        font-size: 0.85rem;
+        max-width: 100%;
+    }
+
+    .hero-content .btn {
+        padding: 0.4rem 0.85rem;
+        font-size: 0.85rem;
     }
 
     .public-page::before,
