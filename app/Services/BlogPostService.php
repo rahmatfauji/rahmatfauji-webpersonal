@@ -37,7 +37,30 @@ class BlogPostService
         );
 
         $payload['excerpt'] = $payload['excerpt'] ?: Str::limit(strip_tags($payload['content']), 170);
+        $payload['category'] = isset($payload['category']) && is_string($payload['category'])
+            ? trim($payload['category']) ?: null
+            : null;
+        $payload['tags'] = $this->normalizeTags($payload['tags'] ?? []);
 
         return $payload;
+    }
+
+    private function normalizeTags(array|string|null $tags): array
+    {
+        if (is_string($tags)) {
+            $tags = preg_split('/\s*,\s*/', $tags) ?: [];
+        }
+
+        if (!is_array($tags)) {
+            return [];
+        }
+
+        return collect($tags)
+            ->map(fn ($tag) => is_string($tag) ? trim($tag) : '')
+            ->filter()
+            ->map(fn (string $tag) => Str::title($tag))
+            ->unique(fn (string $tag) => Str::lower($tag))
+            ->values()
+            ->all();
     }
 }

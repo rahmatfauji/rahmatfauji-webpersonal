@@ -30,10 +30,40 @@ class BlogPostController extends Controller
     {
         $posts = $this->blogPostRepository->paginate(10);
 
+        $tagCounts = BlogPost::query()
+            ->whereNotNull('tags')
+            ->get(['tags'])
+            ->pluck('tags')
+            ->filter(fn ($tags) => is_array($tags))
+            ->flatten()
+            ->filter(fn ($tag) => is_string($tag) && trim($tag) !== '')
+            ->map(fn (string $tag) => trim($tag))
+            ->countBy()
+            ->sortDesc()
+            ->take(6);
+
+        $categoryCounts = BlogPost::query()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->selectRaw('category, COUNT(*) as aggregate')
+            ->groupBy('category')
+            ->orderByDesc('aggregate')
+            ->limit(6)
+            ->get();
+
         session()->put('admin.bulk.blog_post_ids', $posts->getCollection()->pluck('id')->map(fn ($id) => (int) $id)->all());
 
         return view('admin.blog-posts.index', [
             'posts' => $posts,
+            'analytics' => [
+                'total_views' => (int) BlogPost::query()->sum('view_count'),
+                'published_count' => (int) BlogPost::query()->where('is_published', true)->count(),
+                'draft_count' => (int) BlogPost::query()->where('is_published', false)->count(),
+                'average_views' => (int) round((float) BlogPost::query()->avg('view_count')),
+                'top_posts' => BlogPost::query()->orderByDesc('view_count')->latest('published_at')->take(5)->get(),
+                'category_counts' => $categoryCounts,
+                'tag_counts' => $tagCounts,
+            ],
         ]);
     }
 

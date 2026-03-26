@@ -18,6 +18,42 @@
     </div>
 </section>
 
+<section class="clean-card p-4 mb-4 fade-in-up blog-filter-shell">
+    <form method="GET" action="{{ route('blog.index') }}" class="row g-3 align-items-end">
+        <div class="col-lg-5">
+            <label class="form-label">{{ __('Search Articles') }}</label>
+            <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="{{ __('Search by title, excerpt, or content') }}">
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label">{{ __('Category') }}</label>
+            <select name="category" class="form-select">
+                <option value="">{{ __('All Categories') }}</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category }}" {{ $activeCategory === $category ? 'selected' : '' }}>{{ $category }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <label class="form-label">{{ __('Tag') }}</label>
+            <input type="text" name="tag" value="{{ $activeTag }}" class="form-control" placeholder="{{ __('Tag') }}">
+        </div>
+        <div class="col-md-4 col-lg-2 d-grid">
+            <button type="submit" class="btn btn-primary">{{ __('Apply') }}</button>
+        </div>
+    </form>
+
+    @if($popularTags->isNotEmpty())
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @foreach($popularTags as $tagItem)
+                <a href="{{ route('blog.index', ['tag' => $tagItem['name']]) }}" class="blog-tag-chip {{ $activeTag === $tagItem['name'] ? 'is-active' : '' }}">
+                    #{{ $tagItem['name'] }}
+                    <span>{{ $tagItem['count'] }}</span>
+                </a>
+            @endforeach
+        </div>
+    @endif
+</section>
+
 <div class="row g-4">
     @forelse($posts as $post)
         <div class="{{ $loop->first ? 'col-12' : 'col-md-6 col-lg-4' }} fade-in-up {{ $loop->first ? '' : 'fade-delay-1' }}" data-fade-in>
@@ -28,6 +64,14 @@
                     </div>
                 @endif
                 <div class="small text-muted mb-2">{{ optional($post->published_at)->format('d M Y') }}</div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @if($post->category)
+                        <span class="badge blue-badge">{{ $post->category }}</span>
+                    @endif
+                    @foreach(($post->tags ?? []) as $tag)
+                        <a href="{{ route('blog.index', ['tag' => $tag]) }}" class="blog-inline-tag">#{{ $tag }}</a>
+                    @endforeach
+                </div>
                 <h5>{{ $post->title }}</h5>
                 <p>{{ $post->excerpt }}</p>
                 <a href="{{ route('blog.show', $post->slug) }}" class="text-decoration-none">{{ __('Read details') }}</a>
@@ -42,5 +86,5 @@
     @endforelse
 </div>
 
-<div class="mt-4 pagination-shell">{{ $posts->links() }}</div>
+<div class="mt-4 pagination-shell">{{ $posts->withQueryString()->links() }}</div>
 @endsection

@@ -6,6 +6,9 @@ use App\Models\BlogPost;
 use App\Models\PortfolioItem;
 use App\Models\Profile;
 use App\Models\Slide;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -39,13 +42,40 @@ class HomeController extends Controller
         ]);
     }
 
-    public function blog()
+    public function blog(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+        $category = trim((string) $request->query('category', ''));
+        $tag = trim((string) $request->query('tag', ''));
+
+        $postsQuery = BlogPost::query()
+            ->published()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery
+                        ->where('title', 'like', "%{$search}%")
+                        ->orWhere('excerpt', 'like', "%{$search}%")
+                        ->orWhere('content', 'like', "%{$search}%");
+                });
+            })
+            ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($tag !== '', fn ($query) => $query->where('tags', 'like', '%"' . addcslashes($tag, '"') . '"%'))
+            ->latest('published_at');
+
         return view('blog.index', [
-            'posts' => BlogPost::query()
-                ->where('is_published', true)
-                ->latest('published_at')
-                ->paginate(6),
+            'posts' => $postsQuery->paginate(6)->withQueryString(),
+            'search' => $search,
+            'activeCategory' => $category,
+            'activeTag' => $tag,
+            'categories' => BlogPost::query()
+                ->published()
+                ->whereNotNull('category')
+                ->where('category', '!=', '')
+                ->select('category')
+                ->distinct()
+                ->orderBy('category')
+                ->pluck('category'),
+            'popularTags' => $this->extractPopularTags(BlogPost::query()->published()->pluck('tags')),
         ]);
     }
 
@@ -55,8 +85,39 @@ class HomeController extends Controller
 
         $blogPost->increment('view_count');
 
+        $relatedPosts = BlogPost::query()
+            ->published()
+            ->whereKeyNot($blogPost->getKey())
+            ->when(filled($blogPost->category) || !empty($blogPost->tags), function ($query) use ($blogPost) {
+                $query->where(function ($subQuery) use ($blogPost) {
+                    if (filled($blogPost->category)) {
+                        $subQuery->where('category', $blogPost->category);
+                    }
+
+                    foreach (($blogPost->tags ?? []) as $relatedTag) {
+                        $subQuery->orWhere('tags', 'like', '%"' . addcslashes((string) $relatedTag, '"') . '"%');
+                    }
+                });
+            })
+            ->latest('published_at')
+            ->take(3)
+            ->get();
+
+        if ($relatedPosts->count() < 3) {
+            $fallbackPosts = BlogPost::query()
+                ->published()
+                ->whereKeyNot($blogPost->getKey())
+                ->whereNotIn('id', $relatedPosts->pluck('id'))
+                ->latest('published_at')
+                ->take(3 - $relatedPosts->count())
+                ->get();
+
+            $relatedPosts = $relatedPosts->concat($fallbackPosts);
+        }
+
         return view('blog.show', [
             'post' => $blogPost,
+            'relatedPosts' => $relatedPosts,
         ]);
     }
 
@@ -94,5 +155,24 @@ class HomeController extends Controller
             'totalPortfolioViews' => (int) PortfolioItem::query()->sum('view_count'),
             'latestPosts' => BlogPost::query()->latest()->take(5)->get(),
         ]);
+    }
+
+    private function extractPopularTags(Collection $tagsCollection, int $limit = 8): Collection
+    {
+        return $tagsCollection
+            ->filter(fn ($tags) => is_array($tags))
+            ->flatten()
+            ->filter(fn ($tag) => is_string($tag) && trim($tag) !== '')
+            ->map(fn (string $tag) => Str::title(trim($tag)))
+            ->countBy(fn (string $tag) => Str::lower($tag))
+            ->sortDesc()
+            ->take($limit)
+            ->map(function (int $count, string $normalizedTag) {
+                return [
+                    'name' => Str::title($normalizedTag),
+                    'count' => $count,
+                ];
+            })
+            ->values();
     }
 }

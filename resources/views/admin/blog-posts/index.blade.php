@@ -12,6 +12,88 @@
     <div class="alert alert-danger">{{ $message }}</div>
 @enderror
 
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="clean-card p-3 admin-stat h-100">
+            <div class="text-muted">{{ __('Total Blog Views') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($analytics['total_views']) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="clean-card p-3 admin-stat h-100">
+            <div class="text-muted">{{ __('Published Articles') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($analytics['published_count']) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="clean-card p-3 admin-stat h-100">
+            <div class="text-muted">{{ __('Draft Articles') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($analytics['draft_count']) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="clean-card p-3 admin-stat h-100">
+            <div class="text-muted">{{ __('Average Views') }}</div>
+            <div class="display-6 fw-bold">{{ number_format($analytics['average_views']) }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="clean-card p-3 h-100">
+            <h5 class="section-title mb-3">{{ __('Top Performing Articles') }}</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Title') }}</th>
+                            <th>{{ __('Category') }}</th>
+                            <th class="text-end">{{ __('Views') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($analytics['top_posts'] as $topPost)
+                        <tr>
+                            <td>{{ $topPost->title }}</td>
+                            <td>{{ $topPost->category ?: __('Uncategorized') }}</td>
+                            <td class="text-end">{{ number_format($topPost->view_count) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="3">{{ __('No article analytics yet.') }}</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="clean-card p-3 h-100">
+            <h5 class="section-title mb-3">{{ __('Topic Snapshot') }}</h5>
+            <div class="mb-3">
+                <div class="small text-muted text-uppercase fw-semibold mb-2">{{ __('Top Categories') }}</div>
+                <div class="d-flex flex-wrap gap-2">
+                    @forelse($analytics['category_counts'] as $categoryCount)
+                        <span class="badge text-bg-light border">{{ $categoryCount->category }} · {{ $categoryCount->aggregate }}</span>
+                    @empty
+                        <span class="text-muted small">{{ __('No categories yet.') }}</span>
+                    @endforelse
+                </div>
+            </div>
+            <div>
+                <div class="small text-muted text-uppercase fw-semibold mb-2">{{ __('Top Tags') }}</div>
+                <div class="d-flex flex-wrap gap-2">
+                    @forelse($analytics['tag_counts'] as $tag => $count)
+                        <span class="badge text-bg-light border">#{{ $tag }} · {{ $count }}</span>
+                    @empty
+                        <span class="text-muted small">{{ __('No tags yet.') }}</span>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="clean-card p-3" data-fade-in>
     <form id="blogBulkDeleteForm" action="{{ route('admin.blog-posts.bulk-destroy') }}" method="POST" class="d-flex justify-content-end mb-3" onsubmit="return confirm('{{ __('Delete selected articles?') }}')">
         @csrf

@@ -179,6 +179,8 @@ class DatabaseSeeder extends Seeder
             BlogPost::query()->create($post);
         }
 
+        $this->call(BlogPostMetadataSeeder::class);
+
         $portfolioItems = [
             [
                 'title' => 'Sales Performance Command Center',

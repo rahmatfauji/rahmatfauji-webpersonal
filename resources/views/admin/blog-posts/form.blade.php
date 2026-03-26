@@ -19,6 +19,27 @@
         @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
+    <div class="col-md-6">
+        <label class="form-label">{{ __('Category') }}</label>
+        <input type="text" name="category" value="{{ old('category', optional($post)->category) }}" class="form-control @error('category') is-invalid @enderror" placeholder="{{ __('Data Analytics') }}">
+        @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+
+    @php
+        $tagsValue = old('tags');
+
+        if ($tagsValue === null) {
+            $tagsValue = implode(', ', optional($post)->tags ?? []);
+        }
+    @endphp
+
+    <div class="col-md-6">
+        <label class="form-label">{{ __('Tags') }}</label>
+        <input type="text" name="tags" value="{{ $tagsValue }}" class="form-control @error('tags') is-invalid @enderror" placeholder="{{ __('Power BI, Dashboard, SQL') }}">
+        <div class="form-text">{{ __('Separate tags with commas.') }}</div>
+        @error('tags')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+
     <div class="col-12">
         <label class="form-label">{{ __('Excerpt') }}</label>
         <textarea name="excerpt" rows="2" class="form-control @error('excerpt') is-invalid @enderror">{{ old('excerpt', optional($post)->excerpt) }}</textarea>

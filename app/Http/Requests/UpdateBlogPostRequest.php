@@ -21,6 +21,8 @@ class UpdateBlogPostRequest extends FormRequest
 
         return [
             'title'          => ['required', 'string', 'max:255'],
+            'category'       => ['nullable', 'string', 'max:100'],
+            'tags'           => ['nullable'],
             'slug'           => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('blog_posts', 'slug')->ignore($postId)],
             'excerpt'        => ['nullable', 'string', 'max:500'],
             'content'        => ['required', 'string', 'max:200000'],
@@ -34,6 +36,8 @@ class UpdateBlogPostRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'category'     => $this->input('category') !== null && trim((string) $this->input('category')) === '' ? null : $this->input('category'),
+            'tags'         => $this->input('tags') !== null && trim((string) $this->input('tags')) === '' ? [] : $this->input('tags'),
             'slug'         => $this->input('slug') !== null && trim((string) $this->input('slug')) === '' ? null : $this->input('slug'),
             'is_published' => $this->boolean('is_published'),
         ]);
